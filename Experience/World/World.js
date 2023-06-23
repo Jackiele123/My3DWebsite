@@ -3,7 +3,7 @@ import Experience from "../Experience.js";
 
 import Room from "./Room.js";
 // import Floor from "./Floor.js";
-// import Controls from "./Controls.js";
+import Controls from "./Controls.js";
 import Environment from "./Environment.js";
 import {EventEmitter} from "events";
 
@@ -21,7 +21,7 @@ export default class World extends EventEmitter {
             this.environment = new Environment();
             // this.floor = new Floor();
             this.room = new Room();
-            // this.controls = new Controls();
+            this.controls = new Controls();
             // this.emit("worldready");
         });
 
@@ -30,5 +30,12 @@ export default class World extends EventEmitter {
 
     resize() {}
 
-    update() {}
+    update() {
+        if (this.room) {
+            this.room.update();
+        }
+        if (this.controls) {
+            this.controls.update();
+        }
+    }
 }

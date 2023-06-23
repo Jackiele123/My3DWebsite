@@ -2,7 +2,7 @@ import * as THREE from "three";
 import Experience from "../Experience.js";
 
 // import Floor from "./Floor.js";
-// import Controls from "./Controls.js";
+import Controls from "./Controls.js";
 import Environment from "./Environment.js";
 
 
@@ -19,7 +19,7 @@ export default class Room  {
 
     }
     setModel() {
-        this.scene.add(this.actualRoom);
+        this.scene.add(this.resources.items.room.scene);
         // this.actualRoom.children.forEach((child) => {
         //     child.castShadow = true;
         //     child.receiveShadow = true;

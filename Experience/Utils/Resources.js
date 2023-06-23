@@ -3,6 +3,8 @@ import * as THREE from "three";
 import {EventEmitter} from "events";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader.js";
+import {VRMLLoader} from "three/examples/jsm/loaders/VRMLLoader.js";
+
 import Experience from "../Experience.js"
 
 export default class Resources extends EventEmitter {
@@ -26,6 +28,7 @@ export default class Resources extends EventEmitter {
         this.loaders = {};
         this.loaders.gltfLoader = new GLTFLoader();
         this.loaders.dracoLoader = new DRACOLoader();
+        this.loaders.vrmlLoader = new VRMLLoader();
         this.loaders.dracoLoader.setDecoderPath("/draco/");
         this.loaders.gltfLoader.setDRACOLoader(this.loaders.dracoLoader);
     }

@@ -23,7 +23,7 @@ export default class Experience {
         this.sizes = new Sizes();
         this.camera = new Camera();
         this.renderer = new Renderer();
-         this.resources = new Resources(assets);
+        this.resources = new Resources(assets);
         // this.theme = new Theme();
          this.world = new World();
         // this.preloader = new Preloader();
