@@ -5,6 +5,7 @@ import Room from "./Room.js";
 // import Floor from "./Floor.js";
 import Controls from "./Controls.js";
 import Environment from "./Environment.js";
+import Robot from "./Robot.js";
 import {EventEmitter} from "events";
 
 export default class World extends EventEmitter {
@@ -20,7 +21,8 @@ export default class World extends EventEmitter {
         this.resources.on("ready", () => {
             this.environment = new Environment();
             // this.floor = new Floor();
-            this.room = new Room();
+            // this.room = new Room();
+            this.robot = new Robot();
             this.controls = new Controls();
             // this.emit("worldready");
         });
@@ -31,8 +33,11 @@ export default class World extends EventEmitter {
     resize() {}
 
     update() {
-        if (this.room) {
-            this.room.update();
+        // if (this.room) {
+        //     this.room.update();
+        // }
+        if (this.robot) {
+            this.robot.update();
         }
         if (this.controls) {
             this.controls.update();

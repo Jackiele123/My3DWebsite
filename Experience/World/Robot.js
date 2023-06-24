@@ -6,23 +6,31 @@ import Controls from "./Controls.js";
 import Environment from "./Environment.js";
 
 
-export default class Room {
+export default class Robot {
     constructor() {
         this.experience = new Experience();
         this.scene = this.experience.scene;
         this.resources = this.experience.resources;
         this.time = this.experience.time;
-        this.room = this.resources.items.room;
-        this.room2 = this.resources.items.room2;
-        this.actualRoom = this.room.scene;
-
+        this.robot = this.resources.items.robot;
+        this.components = this.robot.children[0];
         this.setModel();
- 
+
     }
     setModel() {
-        //this.scene.add(this.room.scene);
-        this.scene.add(this.room2);
-        // this.actualRoom.children.forEach((child) => {
+        let group = new Map();
+        let count = 0;
+        // console.log( this.components.children);
+        this.components.children.forEach((child) => {
+            group.set(child.name,child);
+            // console.log(child.name);
+            child.position.y = count;
+            count += 20;
+        });
+
+
+
+        this.scene.add(this.robot);
         //     child.castShadow = true;
         //     child.receiveShadow = true;
 
