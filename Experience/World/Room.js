@@ -13,26 +13,15 @@ export default class Room {
         this.resources = this.experience.resources;
         this.time = this.experience.time;
         this.room = this.resources.items.room;
-        this.room2 = this.resources.items.room2;
+        this.test = this.resources.items.test;
         this.actualRoom = this.room.scene;
+        //this.actualTest = this.test.scene;
 
         this.setModel();
- 
     }
     setModel() {
-        //this.scene.add(this.room.scene);
-        this.scene.add(this.room2);
-        // this.actualRoom.children.forEach((child) => {
-        //     child.castShadow = true;
-        //     child.receiveShadow = true;
-
-        //     if (child instanceof THREE.Group) {
-        //         child.children.forEach((groupchild) => {
-        //             console.log(groupchild.material);
-        //             groupchild.castShadow = true;
-        //             groupchild.receiveShadow = true;
-        //         });
-        //     }
+        // this.scene.add(this.room.scene);
+        // this.scene.add(this.actualRoom);
 
         //     // console.log(child);
 

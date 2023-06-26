@@ -21,7 +21,7 @@ export default class World extends EventEmitter {
         this.resources.on("ready", () => {
             this.environment = new Environment();
             // this.floor = new Floor();
-            // this.room = new Room();
+            this.room = new Room();
             this.robot = new Robot();
             this.controls = new Controls();
             // this.emit("worldready");
@@ -33,9 +33,9 @@ export default class World extends EventEmitter {
     resize() {}
 
     update() {
-        // if (this.room) {
-        //     this.room.update();
-        // }
+        if (this.room) {
+            this.room.update();
+        }
         if (this.robot) {
             this.robot.update();
         }
