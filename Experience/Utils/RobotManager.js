@@ -1,5 +1,6 @@
 import * as TWEEN from "@tweenjs/tween.js";
 import * as THREE from "three";
+import GUI from "lil-gui";
 
 import {EventEmitter} from "events";
 
@@ -13,20 +14,34 @@ export default class RobotManager extends EventEmitter {
         this.experience = new Experience();
         this.scene = this.experience.scene;
         this.resources = this.experience.resources;
+
         this.time = this.experience.time;
         this.robot = this.resources.items.robot;
         this.components = this.robot.children[0];
-        console.log(this.components);
         this.group = new Map();
 
+        this.ToolBar = new GUI();
+
+        this.setToolBar();
         this.cloneModel();
         this.setModel();
     }
-
+    setToolBar() {
+        this.components.children.forEach((object) => {
+            if (object.name == "Step - Nema 17 - 17HS4401S - Usongshine(Varsayılan)Görüntü Durumu 1") 
+                object.name = "Nema17"
+            
+            const robotFolder = this.ToolBar.addFolder(object.name.replace(/\(Default\).*$/, "").trim())
+            robotFolder.add(object.position, 'x', 0, 500);
+            robotFolder.add(object.position, 'y', 0, 500);
+            robotFolder.add(object.position, 'z', 0, 500);
+            robotFolder.open();
+        });
+        console.log(this.ToolBar.children);
+    }
     setModel() {
         let count = 0;
         this.components.children.forEach((child) => { // this.group[child.name] = child.clone;
-            console.log(child.position);
             child.position.copy(new THREE.Vector3(child.position.x, count, child.position.z));
             count += 30;
         });
@@ -48,15 +63,11 @@ export default class RobotManager extends EventEmitter {
         });
     }
     update() {
-        // this.animate();
-        // this.components.children.forEach((object) => { // this.group[child.name] = child.clone;
-        //     const tween = new TWEEN.Tween({y: object.position.y}).to({
-        //         y: this.group.get(object.name).position.y
-        //     }, 100).onUpdate((coords) => {
-        //         object.position.y = coords.y;
-        //     });
-        //     tween.start();
-        // });
+        this.ToolBar.children.forEach((GUI) =>{
+            GUI.controllers.forEach((controller) =>{
+                controller.updateDisplay();
+            });
+        });
         this.components.children.forEach((object) => {
             if (object.position.y > this.group.get(object.name).position.y) {
                 object.position.set(object.position.x, object.position.y - .2, object.position.z);
