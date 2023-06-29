@@ -1,4 +1,5 @@
 import {EventEmitter} from "events";
+import * as TWEEN from "@tweenjs/tween.js";
 
 export default class Time extends EventEmitter {
     constructor() {
@@ -18,6 +19,7 @@ export default class Time extends EventEmitter {
         this.elapsed = this.current - this.start;
 
         this.emit("update");
+        TWEEN.update();
         window.requestAnimationFrame(() => this.update());
     }
 }
