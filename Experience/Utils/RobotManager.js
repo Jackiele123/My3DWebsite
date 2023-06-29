@@ -22,18 +22,15 @@ export default class RobotManager extends EventEmitter {
 
         this.ToolBar = new GUI({width: 250});
 
-        this.setToolBar();
+        // this.setToolBar();
         this.cloneModel();
         // this.setModel();
-        //this.tween = new TWEEN.Tween(this.components.children[13].position).to({x: 200}, 1000).start()
+        // this.tween = new TWEEN.Tween(this.components.children[13].position).to({x: 200}, 1000).start()
     }
     setToolBar() {
         this.components.children.forEach((object) => {
             if (object.name == "Step - Nema 17 - 17HS4401S - Usongshine(Varsayılan)Görüntü Durumu 1") 
                 object.name = "Nema17"
-
-
-            
 
 
             const tools = {

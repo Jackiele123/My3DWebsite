@@ -15,7 +15,7 @@ export default class Environment {
         };
 
         this.setSunlight();
-        //this.setGUI();
+        // this.setGUI();
     }
 
     setGUI() {

@@ -13,10 +13,13 @@ export default class Renderer {
     }
 
     setRenderer() {
-        this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, antialias: true});
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            antialias: true,
+        });
 
         this.renderer.physicallyCorrectLights = true;
-        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.renderer.toneMapping = THREE.CineonToneMapping;
         this.renderer.toneMappingExposure = 1.75;
         this.renderer.shadowMap.enabled = true;
@@ -30,7 +33,8 @@ export default class Renderer {
         this.renderer.setPixelRatio(this.sizes.pixelRatio);
     }
 
-    update() { // this.renderer.setViewport(0, 0, this.sizes.width, this.sizes.height);
+    update() {
+        // this.renderer.setViewport(0, 0, this.sizes.width, this.sizes.height);
         this.renderer.render(this.scene, this.camera.perspectiveCamera);
         // Second Screen
         // this.renderer.setScissorTest(true);
