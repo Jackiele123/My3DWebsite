@@ -12,12 +12,8 @@ export default class Controls {
         this.resources = this.experience.resources;
         this.time = this.experience.time;
         this.camera = this.experience.camera;
-        this.room = this.experience.world.room.actualRoom;
-        this.room.children.forEach((child) => {
-            if (child.type === "RectAreaLight") {
-                this.rectLight = child;
-            }
-        });
+        this.robot = this.experience.world.robot.robot;
+        this.rectLight = this.experience.world.robot.rectLight;
         this.circleFirst = this.experience.world.floor.circleFirst;
         this.circleSecond = this.experience.world.floor.circleSecond;
         this.circleThird = this.experience.world.floor.circleThird;
@@ -89,13 +85,12 @@ export default class Controls {
         ScrollTrigger.matchMedia({
             //Desktop
             "(min-width: 969px)": () => {
-                // console.log("fired desktop");
 
-                this.room.scale.set(0.11, 0.11, 0.11);
+                this.robot.scale.set(0.01, 0.01, 0.01);
                 this.rectLight.width = 0.5;
                 this.rectLight.height = 0.7;
                 this.camera.orthographicCamera.position.set(0, 6.5, 10);
-                this.room.position.set(0, 0, 0);
+                this.robot.position.set(0, 0, 0);
                 // First section -----------------------------------------
                 this.firstMoveTimeline = new GSAP.timeline({
                     scrollTrigger: {
@@ -108,7 +103,7 @@ export default class Controls {
                     },
                 });
                 this.firstMoveTimeline.fromTo(
-                    this.room.position,
+                    this.robot.position,
                     { x: 0, y: 0, z: 0 },
                     {
                         x: () => {
@@ -128,10 +123,10 @@ export default class Controls {
                     },
                 })
                     .to(
-                        this.room.position,
+                        this.robot.position,
                         {
                             x: () => {
-                                return 1;
+                                return -2;
                             },
                             z: () => {
                                 return this.sizes.height * 0.0032;
@@ -140,11 +135,11 @@ export default class Controls {
                         "same"
                     )
                     .to(
-                        this.room.scale,
+                        this.robot.scale,
                         {
-                            x: 0.4,
-                            y: 0.4,
-                            z: 0.4,
+                            x: .015,
+                            y: .015,
+                            z: .015,
                         },
                         "same"
                     )
@@ -166,10 +161,9 @@ export default class Controls {
                         scrub: 0.6,
                         invalidateOnRefresh: true,
                     },
-                }).to(this.camera.orthographicCamera.position, {
-                    y: 1.5,
-                    x: -4.1,
-                });
+                }).to(this.robot.position, {
+                    x: 2,
+                });2
             },
 
             // Mobile
@@ -177,8 +171,7 @@ export default class Controls {
                 // console.log("fired mobile");
 
                 // Resets
-                this.room.scale.set(0.07, 0.07, 0.07);
-                this.room.position.set(0, 0, 0);
+                this.robot.position.set(0, 0, 0);
                 this.rectLight.width = 0.3;
                 this.rectLight.height = 0.4;
                 this.camera.orthographicCamera.position.set(0, 6.5, 10);
@@ -192,11 +185,7 @@ export default class Controls {
                         scrub: 0.6,
                         // invalidateOnRefresh: true,
                     },
-                }).to(this.room.scale, {
-                    x: 0.1,
-                    y: 0.1,
-                    z: 0.1,
-                });
+                })
 
                 // Second section -----------------------------------------
                 this.secondMoveTimeline = new GSAP.timeline({
@@ -209,7 +198,7 @@ export default class Controls {
                     },
                 })
                     .to(
-                        this.room.scale,
+                        this.robot.scale,
                         {
                             x: 0.25,
                             y: 0.25,
@@ -226,7 +215,7 @@ export default class Controls {
                         "same"
                     )
                     .to(
-                        this.room.position,
+                        this.robot.position,
                         {
                             x: 1.5,
                         },
@@ -242,7 +231,7 @@ export default class Controls {
                         scrub: 0.6,
                         invalidateOnRefresh: true,
                     },
-                }).to(this.room.position, {
+                }).to(this.robot.position, {
                     z: -4.5,
                 });
             },
@@ -341,7 +330,7 @@ export default class Controls {
                         "same"
                     )
                     .to(
-                        this.room.position,
+                        this.robot.position,
                         {
                             y: 0.7,
                         },
@@ -368,86 +357,6 @@ export default class Controls {
                         trigger: ".third-move",
                         start: "center center",
                     },
-                });
-
-                this.room.children.forEach((child) => {
-                    if (child.name === "Mini_Floor") {
-                        this.first = GSAP.to(child.position, {
-                            x: -5.44055,
-                            z: 13.6135,
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "Mailbox") {
-                        this.second = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "Lamp") {
-                        this.third = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            ease: "back.out(2)",
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "FloorFirst") {
-                        this.fourth = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            ease: "back.out(2)",
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "FloorSecond") {
-                        this.fifth = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "FloorThird") {
-                        this.sixth = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            ease: "back.out(2)",
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "Dirt") {
-                        this.seventh = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            ease: "back.out(2)",
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "Flower1") {
-                        this.eighth = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            ease: "back.out(2)",
-                            duration: 0.3,
-                        });
-                    }
-                    if (child.name === "Flower2") {
-                        this.ninth = GSAP.to(child.scale, {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                            ease: "back.out(2)",
-                            duration: 0.3,
-                        });
-                    }
                 });
                 this.secondPartTimeline.add(this.first);
                 this.secondPartTimeline.add(this.second);

@@ -11,7 +11,9 @@ import Renderer from "./Renderer.js";
 import Theme from "./Theme.js";
 import Preloader from "./Preloader.js";
 
+import Controls from "./World/Controls.js";
 import World from "./World/World.js";
+
 
 
 export default class Experience {
