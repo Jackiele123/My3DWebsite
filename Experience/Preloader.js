@@ -1,7 +1,8 @@
-import { EventEmitter } from "events";
+import {EventEmitter} from "events";
 import Experience from "./Experience.js";
 import GSAP from "gsap";
 import convert from "./Utils/convertDivsToSpans.js";
+import { Vector3 } from "three";
 
 export default class Preloader extends EventEmitter {
     constructor() {
@@ -11,6 +12,7 @@ export default class Preloader extends EventEmitter {
         this.sizes = this.experience.sizes;
         this.resources = this.experience.resources;
         this.camera = this.experience.camera;
+        this.time = this.experience.time;
         this.world = this.experience.world;
         this.device = this.sizes.device;
 
@@ -37,66 +39,52 @@ export default class Preloader extends EventEmitter {
     firstIntro() {
         return new Promise((resolve) => {
             this.timeline = new GSAP.timeline();
-            this.timeline.set(".animatedis", { y: 0, yPercent: 100 });
+            this.timeline.set(".animatedis", {
+                y: 0,
+                yPercent: 100
+            });
             this.timeline.to(".preloader", {
                 opacity: 0,
                 delay: 1,
                 onComplete: () => {
-                    document
-                        .querySelector(".preloader")
-                        .classList.add("hidden");
-                },
+                    document.querySelector(".preloader").classList.add("hidden");
+                }
             });
             if (this.device === "desktop") {
-                this.timeline
-                    .to(this.robot.scale, {
-                        x: .01,
-                        y: .01,
-                        z: .01,
-                        ease: "back.out(2.5)",
-                        duration: 0.7,
-                    })
-                    .to(this.robot.position, {
-                        x: 2,
-                        ease: "power1.out",
-                        duration: 0.7,
-                    });
+                this.timeline.to(this.robot.scale, {
+                    x: .01,
+                    y: .01,
+                    z: .01,
+                    ease: "back.out(2.5)",
+                    duration: 0.7
+                }).to(this.robot.position, {
+                    x: 2,
+                    ease: "power1.out",
+                    duration: 0.7
+                });
             } else {
-                this.timeline
-                    .to(this.robot.scale, {
-                        x: .01,
-                        y: .01,
-                        z: .01,
-                        ease: "back.out(2.5)",
-                        duration: 0.7,
-                    })
-                    .to(this.robot.position, {
-                        z: -1,
-                        ease: "power1.out",
-                        duration: 0.7,
-                    });
+                this.timeline.to(this.robot.scale, {
+                    x: .01,
+                    y: .01,
+                    z: .01,
+                    ease: "back.out(2.5)",
+                    duration: 0.7
+                }).to(this.robot.position, {
+                    z: -1,
+                    ease: "power1.out",
+                    duration: 0.7
+                });
             }
-            this.timeline
-                .to(".intro-text .animatedis", {
-                    yPercent: 0,
-                    stagger: 0.05,
-                    ease: "back.out(0.7)",
-                })
-                .to(
-                    ".arrow-svg-wrapper",
-                    {
-                        opacity: 1,
-                    },
-                    "same"
-                )
-                .to(
-                    ".toggle-bar",
-                    {
-                        opacity: 1,
-                        onComplete: resolve,
-                    },
-                    "same"
-                );
+            this.timeline.to(".intro-text .animatedis", {
+                yPercent: 0,
+                stagger: 0.05,
+                ease: "back.out(0.7)"
+            }).to(".arrow-svg-wrapper", {
+                opacity: 1
+            }, "same").to(".toggle-bar", {
+                opacity: 1,
+                onComplete: resolve
+            }, "same");
         });
     }
 
@@ -104,120 +92,58 @@ export default class Preloader extends EventEmitter {
         return new Promise((resolve) => {
             this.secondTimeline = new GSAP.timeline();
 
-            this.secondTimeline
-                .to(
-                    ".intro-text .animatedis",
-                    {
-                        yPercent: 100,
-                        stagger: 0.05,
-                        ease: "back.in(1.7)",
-                    },
-                    "fadeout"
-                )
-                .to(
-                    ".arrow-svg-wrapper",
-                    {
-                        opacity: 0,
-                    },
-                    "fadeout"
-                )
-                .to(
-                    this.robot.position,
-                    {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                        ease: "power1.out",
-                    },
-                    "same"
-                )
-                .to(
-                    this.robot.rotation,
-                    {
-                        y: 2 * Math.PI + Math.PI / 4,
-                    },
-                    "same"
-                )
-                .to(
-                    this.robot.scale,
-                    {
-                        x: .01,
-                        y: .01,
-                        z: .01,
-                    },
-                    "same"
-                )
-                .to(
-                    this.camera.orthographicCamera.position,
-                    {
-                        y: 6.5,
-                    },
-                    "same"
-                )
-                .to(
-                    this.robot.position,
-                    {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                    },
-                    "same"
-                )
-                .set(this.robot.scale, {
-                    x: .01,
-                    y: .01,
-                    z: .01,
-                })
-                .to(
-                    this.robot.scale,
-                    {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                        duration: 1,
-                    },
-                    "introtext"
-                )
-                .to(
-                    ".hero-main-title .animatedis",
-                    {
-                        yPercent: 0,
-                        stagger: 0.07,
-                        ease: "back.out(1.7)",
-                    },
-                    "introtext"
-                )
-                .to(
-                    ".hero-main-description .animatedis",
-                    {
-                        yPercent: 0,
-                        stagger: 0.07,
-                        ease: "back.out(1.7)",
-                    },
-                    "introtext"
-                )
-                .to(
-                    ".first-sub .animatedis",
-                    {
-                        yPercent: 0,
-                        stagger: 0.07,
-                        ease: "back.out(1.7)",
-                    },
-                    "introtext"
-                )
-                .to(
-                    ".second-sub .animatedis",
-                    {
-                        yPercent: 0,
-                        stagger: 0.07,
-                        ease: "back.out(1.7)",
-                    },
-                    "introtext"
-                )
-                .to(".arrow-svg-wrapper", {
-                    opacity: 1,
-                    onComplete: resolve,
-                });
+            this.secondTimeline.to(".intro-text .animatedis", {
+                yPercent: 100,
+                stagger: 0.05,
+                ease: "back.in(1.7)"
+            }, "fadeout").to(".arrow-svg-wrapper", {
+                opacity: 0
+            }, "fadeout").to(this.robot.position, {
+                x: 0,
+                y: 0,
+                z: 0,
+                ease: "power1.out"
+            }, "same").to(this.robot.rotation, {
+                y: 2 * Math.PI + Math.PI / 4
+            }, "same").to(this.robot.scale, {
+                x: .01,
+                y: .01,
+                z: .01
+            }, "same").to(this.camera.orthographicCamera.position, {
+                y: 6.5
+            }, "same").to(this.robot.position, {
+                x: 0,
+                y: 0,
+                z: 0
+            }, "same").set(this.robot.scale, {
+                x: .01,
+                y: .01,
+                z: .01
+            }).to(this.robot.scale, {
+                x: 0,
+                y: 0,
+                z: 0,
+                duration: 1
+            }, "introtext").to(".hero-main-title .animatedis", {
+                yPercent: 0,
+                stagger: 0.07,
+                ease: "back.out(1.7)"
+            }, "introtext").to(".hero-main-description .animatedis", {
+                yPercent: 0,
+                stagger: 0.07,
+                ease: "back.out(1.7)"
+            }, "introtext").to(".first-sub .animatedis", {
+                yPercent: 0,
+                stagger: 0.07,
+                ease: "back.out(1.7)"
+            }, "introtext").to(".second-sub .animatedis", {
+                yPercent: 0,
+                stagger: 0.07,
+                ease: "back.out(1.7)"
+            }, "introtext").to(".arrow-svg-wrapper", {
+                opacity: 1,
+                onComplete: resolve
+            },);
         });
     }
 

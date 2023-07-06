@@ -22,7 +22,7 @@ export default class Robot {
         };
 
         this.setModel();
-        this.onMouseMove();
+        //this.onMouseMove();
     }
     setModel() {
 
@@ -45,12 +45,12 @@ export default class Robot {
 
     }
 
-    onMouseMove() {
-        window.addEventListener("mousemove", (e) => {
-            this.rotation = ((e.clientX - window.innerWidth / 2) * 2) / window.innerWidth;
-            this.lerp.target = this.rotation * 0.05;
-        });
-    }
+    // onMouseMove() {
+    //     window.addEventListener("mousemove", (e) => {
+    //         this.rotation = ((e.clientX - window.innerWidth / 2) * 2) / window.innerWidth;
+    //         this.lerp.target = this.rotation * 0.05;
+    //     });
+    // }
 
     resize() {}
 

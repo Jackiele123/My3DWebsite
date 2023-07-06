@@ -11,7 +11,7 @@ export default class Floor {
     }
 
     setFloor() {
-        this.geometry = new THREE.PlaneGeometry(100, 100);
+        this.geometry = new THREE.PlaneGeometry(50, 50);
         this.material = new THREE.MeshStandardMaterial({
             color: 0xffe6a2,
             side: THREE.BackSide,
