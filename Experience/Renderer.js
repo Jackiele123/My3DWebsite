@@ -8,15 +8,12 @@ export default class Renderer {
         this.scene = this.experience.scene;
         this.canvas = this.experience.canvas;
         this.camera = this.experience.camera;
-
+    
         this.setRenderer();
     }
 
     setRenderer() {
-        this.renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            antialias: true,
-        });
+        this.renderer = new THREE.WebGLRenderer({canvas: this.canvas, antialias: true});
 
         this.renderer.physicallyCorrectLights = true;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -37,23 +34,18 @@ export default class Renderer {
         this.renderer.setViewport(0, 0, this.sizes.width, this.sizes.height);
         this.renderer.render(this.scene, this.camera.orthographicCamera);
         // Second Screen
-        this.renderer.setScissorTest(true);
-        this.renderer.setViewport(
-            this.sizes.width - this.sizes.width / 2,
-            this.sizes.height - this.sizes.height / 2,
-            this.sizes.width / 2,
-            this.sizes.height / 2
-        );
+        if (this.experience.devMode) {
+            this.renderer.setViewport(0, 0, this.sizes.width, this.sizes.height);
+            this.renderer.render(this.scene, this.camera.perspectiveCamera);
+        } else {
+            this.renderer.setScissorTest(true);
+            this.renderer.setViewport(this.sizes.width - this.sizes.width / 2, this.sizes.height - this.sizes.height / 2, this.sizes.width / 2, this.sizes.height / 2);
 
-        this.renderer.setScissor(
-            this.sizes.width - this.sizes.width / 3,
-            this.sizes.height - this.sizes.height / 3,
-            this.sizes.width / 3,
-            this.sizes.height / 3
-        );
+            this.renderer.setScissor(this.sizes.width - this.sizes.width / 3, this.sizes.height - this.sizes.height / 3, this.sizes.width / 3, this.sizes.height / 3);
 
-        this.renderer.render(this.scene, this.camera.perspectiveCamera);
+            this.renderer.render(this.scene, this.camera.perspectiveCamera);
 
-        this.renderer.setScissorTest(false);
+            this.renderer.setScissorTest(false);
+        }
     }
 }

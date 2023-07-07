@@ -18,14 +18,43 @@ export default class Controls {
         this.circleSecond = this.experience.world.floor.circleSecond;
         this.circleThird = this.experience.world.floor.circleThird;
 
-        GSAP.registerPlugin(ScrollTrigger);
+        this.progress = 0;
+        this.position = new THREE.Vector3(0, 0, 0);
+        this.lookAtPosition = new THREE.Vector3(0, 0, 0);
 
-        document.querySelector(".page").style.overflow = "visible";
+        this.directionalVector = new THREE.Vector3(0, 0, 0);
+        this.staticVector  = new THREE.Vector3(0, 1, 0);
+        this.crossVector = new THREE.Vector3(0, 0, 0);
 
-        if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            this.setSmoothScroll();
+        if (!this.experience.devMode) {
+            GSAP.registerPlugin(ScrollTrigger);
+
+            document.querySelector(".page").style.overflow = "visible";
+
+            if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                this.setSmoothScroll();
+            }
+            this.setScrollTrigger();
         }
-        this.setScrollTrigger();
+        this.setPath();
+    }
+
+    setPath() {
+        this.curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-10, 5, 0),
+            new THREE.Vector3(0, 5, -10),
+            new THREE.Vector3(10, 5, 0),
+            new THREE.Vector3(0, 5, 10),
+        ],true);
+        
+        const points =this.curve.getPoints(50);
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        const material = new THREE.LineBasicMaterial({color: 0xff0000});
+
+        // Create the final object to add to the scene
+        const curveObject = new THREE.Line(geometry, material);
+        this.scene.add(curveObject);
     }
 
     setupASScroll() { // https://github.com/ashthornton/asscroll
@@ -67,8 +96,8 @@ export default class Controls {
             "(min-width: 969px)": () => {
 
                 this.robot.scale.set(0.01, 0.01, 0.01);
-                this.rectLight.width = 0.5;
-                this.rectLight.height = 0.7;
+                // this.rectLight.width = 0.5;
+                // this.rectLight.height = 0.7;
                 this.camera.orthographicCamera.position.set(0, 6.5, 10);
                 this.robot.position.set(0, 0, 0);
                 // First section -----------------------------------------
@@ -108,14 +137,7 @@ export default class Controls {
                     z: () => {
                         return this.sizes.height * 0.0032;
                     }
-                }, "same").to(this.robot.scale, {
-                    x: .015,
-                    y: .015,
-                    z: .015
-                }, "same").to(this.rectLight, {
-                    width: 0.5 * 4,
-                    height: 0.7 * 4
-                }, "same");
+                }, "same")
 
                 // Third section -----------------------------------------
                 this.thirdMoveTimeline = new GSAP.timeline({
@@ -331,5 +353,18 @@ export default class Controls {
     }
     resize() {}
 
-    update() {}
+    update() {
+        this.progress += 0.0001;
+        this.camera.orthographicCamera.position.copy(this.position);
+        this.directionalVector.subVectors(
+            this.curve.getPointAt((this.progress % 1)),
+            this.position
+        );
+        this.directionalVector.normalize();
+        this.crossVector.crossVectors(
+            this.directionalVector,
+            this.staticVector
+        )
+        this.camera.orthographicCamera.lookAt(this.crossVector);
+    }
 }

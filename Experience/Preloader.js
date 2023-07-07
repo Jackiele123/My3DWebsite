@@ -2,7 +2,7 @@ import {EventEmitter} from "events";
 import Experience from "./Experience.js";
 import GSAP from "gsap";
 import convert from "./Utils/convertDivsToSpans.js";
-import { Vector3 } from "three";
+import {Vector3} from "three";
 
 export default class Preloader extends EventEmitter {
     constructor() {
@@ -38,6 +38,9 @@ export default class Preloader extends EventEmitter {
 
     firstIntro() {
         return new Promise((resolve) => {
+            if (this.experience.devMode) {
+                resolve();
+            }
             this.timeline = new GSAP.timeline();
             this.timeline.set(".animatedis", {
                 y: 0,
@@ -90,6 +93,9 @@ export default class Preloader extends EventEmitter {
 
     secondIntro() {
         return new Promise((resolve) => {
+            if (this.experience.devMode) {
+                resolve();
+            }
             this.secondTimeline = new GSAP.timeline();
 
             this.secondTimeline.to(".intro-text .animatedis", {
@@ -120,9 +126,9 @@ export default class Preloader extends EventEmitter {
                 y: .01,
                 z: .01
             }).to(this.robot.scale, {
-                x: 0,
-                y: 0,
-                z: 0,
+                x: .01,
+                y: .01,
+                z: .01,
                 duration: 1
             }, "introtext").to(".hero-main-title .animatedis", {
                 yPercent: 0,
