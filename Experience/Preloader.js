@@ -21,8 +21,10 @@ export default class Preloader extends EventEmitter {
         });
 
         this.world.on("worldready", () => {
-            this.setAssets();
-            this.playIntro();
+            this.robot = this.experience.world.robot.robot;
+            this.showTarget();
+            // this.setAssets();
+            // this.playIntro();
         });
     }
 
@@ -36,6 +38,47 @@ export default class Preloader extends EventEmitter {
         this.robot = this.experience.world.robot.robot;
     }
 
+    showTarget() {
+        return new Promise((resolve) => {
+            this.timeline = new GSAP.timeline();
+            this.timeline.set(".animatedis", {
+                y: 0,
+                yPercent: 100
+            });
+            this.timeline.to(".preloader", {
+                opacity: 0,
+                delay: 1,
+                onComplete: () => {
+                    document.querySelector(".preloader").classList.add("hidden");
+                }
+            });
+            if (this.device === "desktop") {
+                this.timeline.to(this.robot.scale, {
+                    x: .01,
+                    y: .01,
+                    z: .01,
+                    ease: "back.out(2.5)",
+                    duration: 0.7
+                }).to(this.robot.position, {
+                    x: 2,
+                    ease: "power1.out",
+                    duration: 0.7
+                });
+            } else {
+                this.timeline.to(this.robot.scale, {
+                    x: .01,
+                    y: .01,
+                    z: .01,
+                    ease: "back.out(2.5)",
+                    duration: 0.7
+                }).to(this.robot.position, {
+                    z: -1,
+                    ease: "power1.out",
+                    duration: 0.7
+                });
+            }
+        });
+    }
     firstIntro() {
         return new Promise((resolve) => {
             if (this.experience.devMode) {

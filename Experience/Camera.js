@@ -47,7 +47,7 @@ export default class Camera {
     }
 
     setOrbitControls() {
-        this.controls = new OrbitControls(this.perspectiveCamera, document.querySelector(".hero"));
+        this.controls = new OrbitControls(this.perspectiveCamera, document.querySelector(".experience"));
         // this.controls.enableDamping = true;
         // this.controls.enableZoom = true;
     }

@@ -18,36 +18,30 @@ export default class Controls {
         this.circleSecond = this.experience.world.floor.circleSecond;
         this.circleThird = this.experience.world.floor.circleThird;
 
-        this.progress = 0;
-        this.position = new THREE.Vector3(0, 0, 0);
-        this.lookAtPosition = new THREE.Vector3(0, 0, 0);
+        // if (!this.experience.devMode) {
+        //     GSAP.registerPlugin(ScrollTrigger);
 
-        this.directionalVector = new THREE.Vector3(0, 0, 0);
-        this.staticVector  = new THREE.Vector3(0, 1, 0);
-        this.crossVector = new THREE.Vector3(0, 0, 0);
+        //     document.querySelector(".page").style.overflow = "visible";
 
-        if (!this.experience.devMode) {
-            GSAP.registerPlugin(ScrollTrigger);
+        //     if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        //         this.setSmoothScroll();
+        //     }
+        //     this.setScrollTrigger();
+        // }
 
-            document.querySelector(".page").style.overflow = "visible";
-
-            if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                this.setSmoothScroll();
-            }
-            this.setScrollTrigger();
-        }
         this.setPath();
+        this.travel = new travelLookingAtCurve(this.camera.orthographicCamera, this.curve, this.robot, 0.0004);
     }
 
     setPath() {
         this.curve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(-10, 5, 0),
-            new THREE.Vector3(0, 5, -10),
-            new THREE.Vector3(10, 5, 0),
-            new THREE.Vector3(0, 5, 10),
-        ],true);
-        
-        const points =this.curve.getPoints(50);
+            new THREE.Vector3(-20, 5, 0),
+            new THREE.Vector3(0, 10, -20),
+            new THREE.Vector3(20, 15, 0),
+            new THREE.Vector3(0, 10, 20),
+        ], true);
+
+        const points = this.curve.getPoints(50);
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
 
         const material = new THREE.LineBasicMaterial({color: 0xff0000});
@@ -354,17 +348,20 @@ export default class Controls {
     resize() {}
 
     update() {
-        this.progress += 0.0001;
-        this.camera.orthographicCamera.position.copy(this.position);
-        this.directionalVector.subVectors(
-            this.curve.getPointAt((this.progress % 1)),
-            this.position
-        );
-        this.directionalVector.normalize();
-        this.crossVector.crossVectors(
-            this.directionalVector,
-            this.staticVector
-        )
-        this.camera.orthographicCamera.lookAt(this.crossVector);
+        this.travel.update();
+    }
+}
+class travelLookingAtCurve {
+    constructor(camera, curve, target, speed,) {
+        this.camera = camera;
+        this.curve = curve;
+        this.speed = speed;
+        this.target = target;
+        this.progress = 0;
+    }
+    update() {
+        this.progress += this.speed;
+        this.camera.position.copy(this.curve.getPointAt((this.progress % 1)));
+        this.camera.lookAt(this.target.position);
     }
 }

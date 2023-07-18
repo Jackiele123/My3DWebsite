@@ -14,12 +14,24 @@ html, body{
   overflow: hidden;
 } */
 
+
+
+
 h1,
 section,
 p,
 span,
 svg{
   transition: background-color 0.5s, color 0.5s;
+}
+
+#info {
+	position: absolute;
+	top: 10px;
+	width: 100%;
+	text-align: center;
+	z-index: 100;
+	display:block;
 }
 
 :root{
@@ -184,7 +196,7 @@ svg{
   justify-content: center;
   align-items: center;
   top: 48px;
-  right: 48px;
+  left: 48px;
   z-index: 99999999999999;
 }
 
