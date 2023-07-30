@@ -7,6 +7,6 @@ export default [
     {
         name: "robot",
         type: "3mf",
-        path: "/models/test3mf.3MF"
+        path: "/models/RobotArmV2.3MF"
     }
 ]

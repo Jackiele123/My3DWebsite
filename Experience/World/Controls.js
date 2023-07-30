@@ -18,27 +18,32 @@ export default class Controls {
         this.circleSecond = this.experience.world.floor.circleSecond;
         this.circleThird = this.experience.world.floor.circleThird;
 
-        // if (!this.experience.devMode) {
-        //     GSAP.registerPlugin(ScrollTrigger);
+        if (true){
+            document.querySelector(".page").style.display = "none";
+            this.camera.perspectiveCamera.position.copy(this.camera.orthographicCamera.position);
+            this.camera.perspectiveCamera.rotation.copy(this.camera.orthographicCamera.rotation);
+        }
+        else {
+            GSAP.registerPlugin(ScrollTrigger);
+            
+            document.querySelector(".page").style.display = "none";
 
-        //     document.querySelector(".page").style.overflow = "visible";
+            if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                this.setSmoothScroll();
+            }
+            this.setScrollTrigger();
+        }
 
-        //     if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        //         this.setSmoothScroll();
-        //     }
-        //     this.setScrollTrigger();
-        // }
-
-        this.setPath();
-        this.travel = new travelLookingAtCurve(this.camera.orthographicCamera, this.curve, this.robot, 0.0004);
+        // this.setPath();
+        // this.travel = new travelLookingAtCurve(this.camera.orthographicCamera, this.curve, this.robot);
     }
 
     setPath() {
         this.curve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(-20, 5, 0),
-            new THREE.Vector3(0, 10, -20),
-            new THREE.Vector3(20, 15, 0),
-            new THREE.Vector3(0, 10, 20),
+            new THREE.Vector3(-10, 5, 0),
+            new THREE.Vector3(0, 10, -10),
+            new THREE.Vector3(10, 15, 0),
+            new THREE.Vector3(0, 10, 10),
         ], true);
 
         const points = this.curve.getPoints(50);
@@ -87,14 +92,7 @@ export default class Controls {
 
     setScrollTrigger() {
         ScrollTrigger.matchMedia({ // Desktop
-            "(min-width: 969px)": () => {
-
-                this.robot.scale.set(0.01, 0.01, 0.01);
-                // this.rectLight.width = 0.5;
-                // this.rectLight.height = 0.7;
-                this.camera.orthographicCamera.position.set(0, 6.5, 10);
-                this.robot.position.set(0, 0, 0);
-                // First section -----------------------------------------
+            "(min-width: 969px)": () => { // First section -----------------------------------------
                 this.firstMoveTimeline = new GSAP.timeline({
                     scrollTrigger: {
                         trigger: ".first-move",
@@ -104,17 +102,16 @@ export default class Controls {
                         // markers: true,
                         invalidateOnRefresh: true
                     }
-                });
-                this.firstMoveTimeline.fromTo(this.robot.position, {
-                    x: 0,
+                })
+                this.firstMoveTimeline.to(this.robot.rotation, {
+                    y: -Math.PI / 1.8
+                })
+
+                this.firstMoveTimeline.to(this.robot.position, {
+                    x: 2.5,
                     y: 0,
                     z: 0
-                }, {
-                    x: () => {
-                        return this.sizes.width * 0.0014;
-                    }
-                });
-
+                }, "<");
                 // Second section -----------------------------------------
                 this.secondMoveTimeline = new GSAP.timeline({
                     scrollTrigger: {
@@ -124,14 +121,10 @@ export default class Controls {
                         scrub: 0.6,
                         invalidateOnRefresh: true
                     }
-                }).to(this.robot.position, {
-                    x: () => {
-                        return -2;
-                    },
-                    z: () => {
-                        return this.sizes.height * 0.0032;
-                    }
-                }, "same")
+                }).to(this.robot.rotation, {y: 0}).to(this.robot.position, {
+                    x: -2,
+                    z: 2
+                }, "<")
 
                 // Third section -----------------------------------------
                 this.thirdMoveTimeline = new GSAP.timeline({
@@ -143,19 +136,11 @@ export default class Controls {
                         invalidateOnRefresh: true
                     }
                 }).to(this.robot.position, {x: 2});
-                2
             },
 
             // -----------------------------------Mobile-----------------------------------
             "(max-width: 968px)": () => {
                 // console.log("fired mobile");
-
-                // Resets
-                this.robot.position.set(0, 0, 0);
-                this.rectLight.width = 0.3;
-                this.rectLight.height = 0.4;
-                this.camera.orthographicCamera.position.set(0, 6.5, 10);
-
                 // First section -----------------------------------------
                 this.firstMoveTimeline = new GSAP.timeline({
                     scrollTrigger: {
@@ -163,9 +148,11 @@ export default class Controls {
                         start: "top top",
                         end: "bottom bottom",
                         scrub: 0.6,
-                        // invalidateOnRefresh: true,
+                        invalidateOnRefresh: true
                     }
-                })
+                }).to(this.robot.rotation, {
+                    y: Math.PI / 2
+                }, "same")
 
                 // Second section -----------------------------------------
                 this.secondMoveTimeline = new GSAP.timeline({
@@ -177,12 +164,9 @@ export default class Controls {
                         invalidateOnRefresh: true
                     }
                 }).to(this.robot.scale, {
-                    x: 0.25,
-                    y: 0.25,
-                    z: 0.25
-                }, "same").to(this.rectLight, {
-                    width: 0.3 * 3.4,
-                    height: 0.4 * 3.4
+                    x: 0.01,
+                    y: 0.01,
+                    z: 0.01
                 }, "same").to(this.robot.position, {
                     x: 1.5
                 }, "same");
@@ -261,27 +245,14 @@ export default class Controls {
                 // Intro section -----------------------------------------
                 this.introTimeline = new GSAP.timeline({
                     scrollTrigger: {
-                        trigger: ".hero-wrapper",
+                        trigger: ".tour-wrapper",
                         start: "top top",
                         end: "bottom bottom",
                         scrub: 0.6
                     }
-                }).set(this.camera.orthographicCamera, {
-                    onUpdate: () => { // console.log(tl.progress())
-                        var camera_offset = {
-                            x: 10,
-                            y: 10,
-                            z: 10
-                        };
-                        var camera_speed = 0.001;
-                        var target = this.robot.position;
-                        this.camera.orthographicCamera.position.x = target.x + camera_offset.x * (Math.sin(this.time.current * camera_speed));
-                        this.camera.orthographicCamera.position.z = target.z + camera_offset.z * (Math.cos(this.time.current * camera_speed));
-                        this.camera.orthographicCamera.position.y = target.y + camera_offset.y;
-                        this.camera.orthographicCamera.lookAt(target.x, target.y, target.z);
-                        console.log(this.camera.orthographicCamera.position);
-                    }
-                });
+                }).to(this.robot.rotation, {
+                    y: Math.PI * 2
+                },);
                 // First section -----------------------------------------
                 this.firstCircle = new GSAP.timeline({
                     scrollTrigger: {
@@ -345,22 +316,19 @@ export default class Controls {
             }
         });
     }
-    resize() {}
+    resize() {}4
 
-    update() {
-        this.travel.update();
-    }
+
+    update() {}
 }
+
 class travelLookingAtCurve {
-    constructor(camera, curve, target, speed,) {
+    constructor(camera, curve, target) {
         this.camera = camera;
         this.curve = curve;
-        this.speed = speed;
         this.target = target;
-        this.progress = 0;
     }
     update() {
-        this.progress += this.speed;
         this.camera.position.copy(this.curve.getPointAt((this.progress % 1)));
         this.camera.lookAt(this.target.position);
     }

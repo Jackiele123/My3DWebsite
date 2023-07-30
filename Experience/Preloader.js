@@ -21,69 +21,53 @@ export default class Preloader extends EventEmitter {
         });
 
         this.world.on("worldready", () => {
-            this.robot = this.experience.world.robot.robot;
-            this.showTarget();
-            // this.setAssets();
-            // this.playIntro();
+            this.setAssets();
+            this.playIntro();
         });
     }
 
+    skipIntro() {
+        return new Promise((resolve) => {
+            this.timeline = new GSAP.timeline();
+            this.timeline.set(".animatedis", {yPercent: 100});
+            this.timeline.to(".intro-text .animatedis", {
+                yPercent: 100
+            }, "fadeout").to(".arrow-svg-wrapper", {
+                opacity: 0
+            }, "fadeout").to(this.robot.position, {
+                x: 0,
+                y: 0,
+                z: 0
+            }, "same").to(this.robot.scale, {
+                x: .01,
+                y: .01,
+                z: .01
+            }, "same").to(".tour-main-title .animatedis", {
+                yPercent: 0
+            }, "introtext").to(".tour-main-description .animatedis", {
+                yPercent: 0
+            }, "introtext").to(".first-sub .animatedis", {
+                yPercent: 0
+            }, "introtext").to(".second-sub .animatedis", {
+                yPercent: 0
+            }, "introtext").to(".arrow-svg-wrapper", {
+                opacity: 1,
+                onComplete: resolve
+            },);
+        })
+    }
     setAssets() {
         convert(document.querySelector(".intro-text"));
-        convert(document.querySelector(".hero-main-title"));
-        convert(document.querySelector(".hero-main-description"));
-        convert(document.querySelector(".hero-second-subheading"));
+        convert(document.querySelector(".tour-main-title"));
+        convert(document.querySelector(".tour-main-description"));
+        convert(document.querySelector(".tour-second-subheading"));
         convert(document.querySelector(".second-sub"));
 
         this.robot = this.experience.world.robot.robot;
     }
 
-    showTarget() {
-        return new Promise((resolve) => {
-            this.timeline = new GSAP.timeline();
-            this.timeline.set(".animatedis", {
-                y: 0,
-                yPercent: 100
-            });
-            this.timeline.to(".preloader", {
-                opacity: 0,
-                delay: 1,
-                onComplete: () => {
-                    document.querySelector(".preloader").classList.add("hidden");
-                }
-            });
-            if (this.device === "desktop") {
-                this.timeline.to(this.robot.scale, {
-                    x: .01,
-                    y: .01,
-                    z: .01,
-                    ease: "back.out(2.5)",
-                    duration: 0.7
-                }).to(this.robot.position, {
-                    x: 2,
-                    ease: "power1.out",
-                    duration: 0.7
-                });
-            } else {
-                this.timeline.to(this.robot.scale, {
-                    x: .01,
-                    y: .01,
-                    z: .01,
-                    ease: "back.out(2.5)",
-                    duration: 0.7
-                }).to(this.robot.position, {
-                    z: -1,
-                    ease: "power1.out",
-                    duration: 0.7
-                });
-            }
-        });
-    }
     firstIntro() {
         return new Promise((resolve) => {
-            if (this.experience.devMode) {
-                resolve();
-            }
             this.timeline = new GSAP.timeline();
             this.timeline.set(".animatedis", {
                 y: 0,
@@ -91,7 +75,7 @@ export default class Preloader extends EventEmitter {
             });
             this.timeline.to(".preloader", {
                 opacity: 0,
-                delay: 1,
+                delay: .1,
                 onComplete: () => {
                     document.querySelector(".preloader").classList.add("hidden");
                 }
@@ -101,33 +85,25 @@ export default class Preloader extends EventEmitter {
                     x: .01,
                     y: .01,
                     z: .01,
-                    ease: "back.out(2.5)",
-                    duration: 0.7
-                }).to(this.robot.position, {
-                    x: 2,
-                    ease: "power1.out",
-                    duration: 0.7
-                });
+                    //ease: "back.out(2.5)",
+                    //duration: 0.7
+                    duration: 0.1
+                }).to(this.robot.position, {x: 2});
             } else {
                 this.timeline.to(this.robot.scale, {
-                    x: .01,
-                    y: .01,
-                    z: .01,
-                    ease: "back.out(2.5)",
-                    duration: 0.7
-                }).to(this.robot.position, {
-                    z: -1,
-                    ease: "power1.out",
-                    duration: 0.7
-                });
+                    x: .007,
+                    y: .007,
+                    z: .007,
+                    //ease: "back.out(2.5)",
+                    //duration: 0.7
+                    duration: 0.1
+                }).to(this.robot.position, {y: 1.5});
             }
             this.timeline.to(".intro-text .animatedis", {
                 yPercent: 0,
-                stagger: 0.05,
-                ease: "back.out(0.7)"
+                //stagger: 0.05,
+                //ease: "back.out(0.7)"
             }).to(".arrow-svg-wrapper", {
-                opacity: 1
-            }, "same").to(".toggle-bar", {
                 opacity: 1,
                 onComplete: resolve
             }, "same");
@@ -140,7 +116,6 @@ export default class Preloader extends EventEmitter {
                 resolve();
             }
             this.secondTimeline = new GSAP.timeline();
-
             this.secondTimeline.to(".intro-text .animatedis", {
                 yPercent: 100,
                 stagger: 0.05,
@@ -153,31 +128,24 @@ export default class Preloader extends EventEmitter {
                 z: 0,
                 ease: "power1.out"
             }, "same").to(this.robot.rotation, {
-                y: 2 * Math.PI + Math.PI / 4
+                y: 0
             }, "same").to(this.robot.scale, {
                 x: .01,
                 y: .01,
                 z: .01
-            }, "same").to(this.camera.orthographicCamera.position, {
-                y: 6.5
             }, "same").to(this.robot.position, {
                 x: 0,
                 y: 0,
                 z: 0
-            }, "same").set(this.robot.scale, {
-                x: .01,
-                y: .01,
-                z: .01
-            }).to(this.robot.scale, {
-                x: .01,
-                y: .01,
-                z: .01,
-                duration: 1
-            }, "introtext").to(".hero-main-title .animatedis", {
+            }, "same").to(this.robot.rotation, {
+                y: 2 *Math.PI,
+                ease: "back.out(1.7)",
+                duration: 4
+            }, "introtext").to(".tour-main-title .animatedis", {
                 yPercent: 0,
                 stagger: 0.07,
                 ease: "back.out(1.7)"
-            }, "introtext").to(".hero-main-description .animatedis", {
+            }, "introtext").to(".tour-main-description .animatedis", {
                 yPercent: 0,
                 stagger: 0.07,
                 ease: "back.out(1.7)"
@@ -211,7 +179,7 @@ export default class Preloader extends EventEmitter {
         let currentY = e.touches[0].clientY;
         let difference = this.initalY - currentY;
         if (difference > 0) {
-            console.log("swipped up");
+            console.log("swiped up");
             this.removeEventListeners();
             this.playSecondIntro();
         }
@@ -237,26 +205,10 @@ export default class Preloader extends EventEmitter {
     }
     async playSecondIntro() {
         this.moveFlag = false;
-        await this.secondIntro();
+        // await this.secondIntro();
+        await this.skipIntro();
         this.scaleFlag = false;
         this.emit("enablecontrols");
-    }
-
-    move() {
-        if (this.device === "desktop") {
-            this.robot.position.set(2, 0, 0);
-        } else {
-            this.robot.position.set(0, 0, -1);
-        }
-    }
-
-    scale() {
-
-        if (this.device === "desktop") {
-            this.robot.scale.set(0.01, 0.01, 0.01);
-        } else {
-            this.robot.scale.set(0.007, 0.007, 0.007);
-        }
     }
 
     update() {

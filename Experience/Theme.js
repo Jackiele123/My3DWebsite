@@ -5,7 +5,7 @@ export default class Theme extends EventEmitter {
         super();
 
         this.theme = "light";
-
+        document.body.classList.toggle("light-theme");
         // this.toggleButton = document.querySelector(".toggle-button");
         // this.toggleCircle = document.querySelector(".toggle-circle");
 

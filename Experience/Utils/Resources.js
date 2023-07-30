@@ -20,8 +20,6 @@ export default class Resources extends EventEmitter {
         this.queue = this.assets.length
         this.loaded = 0;
 
-        this.groups = {};
-
         this.setLoaders();
         this.startLoading();
     }
@@ -43,7 +41,7 @@ export default class Resources extends EventEmitter {
                 });
             } else if (asset.type === "3mf") {
                 this.loaders.threemfLoader.load(asset.path, (file) => {
-                    file.scale.set(0.03, 0.03, 0.03);
+                    file.scale.set(0.001, 0.001, 0.001);
                     file.traverse(function (child) {
                         child.castShadow = true;
                     });

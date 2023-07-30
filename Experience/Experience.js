@@ -36,12 +36,9 @@ export default class Experience {
         this.devMode = false;
         // this.controls = new Controls();
         this.preloader = new Preloader();
-        this.world.on("worldready", () => {
+        this.preloader.on("enablecontrols", () => {
             this.controls = new Controls();
         });
-        // this.preloader.on("enablecontrols", () => {
-        //     this.controls = new Controls();
-        // });
 
         this.sizes.on("resize", () => {
             this.resize();

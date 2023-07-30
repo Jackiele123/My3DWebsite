@@ -15,12 +15,6 @@ export default class Robot {
         // console.log(this.components);
         // this.group = new Map();
 
-        this.lerp = {
-            current: 0,
-            target: 0,
-            ease: 0.1,
-        };
-
         this.setModel();
         //this.onMouseMove();
     }
@@ -55,14 +49,6 @@ export default class Robot {
     resize() {}
 
     update() {
-
-        this.lerp.current = GSAP.utils.interpolate(
-            this.lerp.current,
-            this.lerp.target,
-            this.lerp.ease
-        );
-
-        this.robot.rotation.y = this.lerp.current;
 
         this.robotManager.update();
     }
