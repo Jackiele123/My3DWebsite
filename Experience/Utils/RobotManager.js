@@ -19,67 +19,90 @@ export default class RobotManager extends EventEmitter {
         this.robot = this.resources.items.robot;
         this.components = this.robot.children[0];
 
+
         this.motionGroup = new THREE.Group();
+        // this.motionGroup.scale.set(0.01, 0.01, 0.01);
         this.group = new Map();
 
         this.ToolBar = new GUI({width: 250});
-
+        // this.setHelperLines();
         this.cloneModel();
         this.setToolBar();
         // this.setModel();
+        // this.setMotionGroup();
         // this.tween = new TWEEN.Tween(this.components.children[13].position).to({x: 200}, 1000).start()
     }
 
+    // setHelperLines() {
+    //     this.motionGroup.add(new THREE.AxesHelper(5));
+    // }
+
     setToolBar() {
-        this.group.forEach((object) => {
-            console.log(object);
+        for (let i = 1; i < 6; i++) {
+            console.log(`j${i}`);
+            let object = this.group.get(`j${i}`);
             const tools = {
                 xPosition: object.position.x,
                 yPosition: object.position.y,
                 zPosition: object.position.z,
-
+                xRotation: object.rotation.x,
+                yRotation: object.rotation.y,
+                zRotation: object.rotation.z,
                 Save() {
                     console.log(object.position);
                 },
                 Reset() {
                     object.position.set(tools.xPosition, tools.yPosition, tools.zPosition);
+                    object.rotation.set(tools.xRotation, tools.yRotation, tools.zRotation);
                 }
             };
 
-            const robotFolder = this.ToolBar.addFolder(object.name)
-            robotFolder.add(object.position, 'x', 0, 500);
-            robotFolder.add(object.position, 'y', 0, 500);
-            robotFolder.add(object.position, 'z', 0, 500);
-            robotFolder.add(tools, 'Save');
+            const robotFolder = this.ToolBar.addFolder(object.name);
+            if (object.name === "j2") 
+                robotFolder.add(object.rotation, 'z', 0, Math.PI * 2);
+             else 
+                robotFolder.add(object.rotation, 'y', 0, Math.PI * 2);
+            
+            // robotFolder.add(object.position, 'x', 0, 500);
+            // robotFolder.add(object.position, 'y', 0, 500);
+            // robotFolder.add(object.position, 'z', 0, 500);
+            // robotFolder.add(tools, 'Save');
             robotFolder.add(tools, 'Reset');
-            robotFolder.open();
-        });
+            robotFolder.close();
+        }
+        console.log(this.ToolBar);
     }
+
     setModel() {
-        this.components.children.forEach((child) => { 
+        this.components.children.forEach((child) => {
             child.rotation.copy(new THREE.Vector3(child.position.x, child.position.y, child.position.z));
         });
     }
 
     cloneModel() {
-        this.components.children.forEach((child) => { 
+        this.components.children.forEach((child) => {
             child.name = child.name.replace(/\(Default\).*$/, "").trim()
             this.group.set(child.name, child.clone());
+            this.group.get(child.name).scale.set(1, 1, 1);
         });
-
         this.setMotionGroup();
         console.log(this.group);
     }
 
     setMotionGroup() {
-        this.motionGroup.add(this.group.get("basegear"));
-        this.motionGroup.add(this.group.get("basetophousing"));
-        this.motionGroup.add(this.group.get("j1"));
-        this.group.get("j1").add(this.group.get("j2"));
-        this.group.get("j2").position.copy(this.group.get("j2").getWorldPosition(new THREE.Vector3()));
-        this.group.get("j2").add(this.group.get("j3"));
-        this.group.get("j3").add(this.group.get("j4"));
-        this.group.get("j4").add(this.group.get("j5"));
+        let axesHelper = new THREE.AxesHelper(75);
+        // this.motionGroup.add(axesHelper.clone());
+        this.motionGroup.attach(this.group.get("basegear"));
+        this.motionGroup.attach(this.group.get("basetophousing"));
+        this.motionGroup.attach(this.group.get("j1"));
+        this.group.get("j1").attach(this.group.get("j2"));
+        this.group.get("j2").attach(this.group.get("j3"));
+        this.group.get("j3").attach(this.group.get("j4"));
+        this.group.get("j4").attach(this.group.get("j5"));
+        axesHelper.position.set(13, 0, 78)
+        this.group.get("j5").add(axesHelper.clone());
+        this.motionGroup.scale.set(.01, .01, .01);
+        this.motionGroup.position.set(0, 0, 0);
         this.scene.add(this.motionGroup);
         console.log(this.motionGroup);
     }
@@ -106,10 +129,10 @@ export default class RobotManager extends EventEmitter {
             });
         });
 
-        this.components.children.forEach((object) => {
-            if (object.position.y > this.group.get(object.name).position.y) {
-                object.position.set(object.position.x, object.position.y - .2, object.position.z);
-            }
-        });
+        // this.components.children.forEach((object) => {
+        //     if (object.position.y > this.group.get(object.name).position.y) {
+        //         object.position.set(object.position.x, object.position.y - .2, object.position.z);
+        //     }
+        // });
     }
 }

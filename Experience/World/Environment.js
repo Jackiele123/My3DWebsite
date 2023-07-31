@@ -8,17 +8,17 @@ export default class Environment {
         this.experience = new Experience();
         this.scene = this.experience.scene;
 
-        // this.gui = new GUI({ container: document.querySelector(".tour-main") });
         this.obj = {
             colorObj: { r: 0, g: 0, b: 0 },
-            intensity: 3,
+            intensity: 6,
         };
 
         this.setSunlight();
-        // this.setGUI();
+        //this.setGUI();
     }
 
-    setGUI() {
+    setGUI() { // Helper Tool to optimize the lighting
+        this.gui = new GUI({ width: 600});
         this.gui.addColor(this.obj, "colorObj").onChange(() => {
             this.sunLight.color.copy(this.obj.colorObj);
             this.ambientLight.color.copy(this.obj.colorObj);
@@ -36,8 +36,8 @@ export default class Environment {
         this.sunLight.shadow.camera.far = 20;
         this.sunLight.shadow.mapSize.set(2048, 2048);
         this.sunLight.shadow.normalBias = 0.05;
-        // const helper = new THREE.CameraHelper(this.sunLight.shadow.camera);
-        // this.scene.add(helper);
+        const helper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+        //this.scene.add(helper);
 
         this.sunLight.position.set(-1.5, 7, 3);
         this.scene.add(this.sunLight);
@@ -47,7 +47,6 @@ export default class Environment {
     }
 
     switchTheme(theme) {
-        // console.log(this.sunLight);
         if (theme === "dark") {
             GSAP.to(this.sunLight.color, {
                 r: 0.17254901960784313,

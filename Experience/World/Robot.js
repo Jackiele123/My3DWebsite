@@ -35,21 +35,13 @@ export default class Robot {
 
         this.robot.add(rectLight);
         this.rectLight = rectLight;
-        this.scene.add(this.robot);
+        //this.scene.add(this.robot);
 
     }
-
-    // onMouseMove() {
-    //     window.addEventListener("mousemove", (e) => {
-    //         this.rotation = ((e.clientX - window.innerWidth / 2) * 2) / window.innerWidth;
-    //         this.lerp.target = this.rotation * 0.05;
-    //     });
-    // }
 
     resize() {}
 
     update() {
-
         this.robotManager.update();
     }
 }
