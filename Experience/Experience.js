@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import GUI from "lil-gui";
 
 import Sizes from "./Utils/Sizes.js"
 import Time from "./Utils/Time.js";
@@ -33,6 +34,7 @@ export default class Experience {
         this.resources = new Resources(assets);
         this.theme = new Theme();
         this.world = new World();
+        this.toolBar = new GUI({width: 250})
         this.devMode = false;
         // this.controls = new Controls();
         this.preloader = new Preloader();
