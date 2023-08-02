@@ -1,7 +1,6 @@
 import * as TWEEN from "@tweenjs/tween.js";
 import * as THREE from "three";
 import GUI from "lil-gui";
-import numeric from "numeric";
 
 import {EventEmitter} from "events";
 import Experience from "../Experience.js"
@@ -34,19 +33,19 @@ export default class InverseKinematics extends EventEmitter {
             {
                 d: 0,
                 a: 147.25,
-                theta: 0,
+                theta: Math.PI / 2,
                 alpha: 0
             },
             // Link 3 (Joint 2 to Joint 3)
             {
                 d: 0,
                 a: 55.5,
-                theta: Math.PI / 2,
-                alpha: 0
+                theta: -Math.PI,
+                alpha: Math.PI / 2
             },
             // Link 4 (Joint 3 to Joint 4)
             {
-                d: 142,
+                d: 141.6,
                 a: 0,
                 theta: 0,
                 alpha: -Math.PI / 2
@@ -60,7 +59,7 @@ export default class InverseKinematics extends EventEmitter {
             },
             // Link 6 (Joint 5 to End Effector)
             {
-                d: 76,
+                d: 80,
                 a: 0,
                 theta: 0,
                 alpha: 0
@@ -76,18 +75,23 @@ export default class InverseKinematics extends EventEmitter {
             joint: 1,
             axesHelper: axesHelper,
             calculateFK() {
-                console.log(IK.forwardKinematics());
+                console.log(IK.forwardKinematics().position);
             },
             addHelperTools() {
-                let object = IK.robotJointMap.get(`j${this.joint}`);
+                let object = IK.robotJointMap.get(`j${
+                    this.joint
+                }`);
                 if (object !== undefined) 
                     object.add(axesHelper);
+                
+
+
             },
             DeleteHelperTools() {
                 axesHelper.removeFromParent();
             }
         }
-        IKToolBar.add(tools, "joint", 1, 6).name("Joint Number");
+        IKToolBar.add(tools, "joint", 1, 6, 1).name("Joint Number");
         IKToolBar.add(tools, "calculateFK");
         IKToolBar.add(tools, "addHelperTools");
         IKToolBar.add(tools, "DeleteHelperTools");
@@ -99,6 +103,9 @@ export default class InverseKinematics extends EventEmitter {
             const axesHelper = new THREE.AxesHelper(200);
             if (object !== undefined) 
                 object.add(axesHelper);
+            
+
+
         }
     }
 
@@ -141,98 +148,83 @@ export default class InverseKinematics extends EventEmitter {
         return twistAngles;
     }
 
-    // Function to create a 4x4 rotation matrix for rotation about the Z-axis (theta in radians)
-    rotationMatrixZ(theta) {
-        const cosTheta = Math.cos(theta);
-        const sinTheta = Math.sin(theta);
+    // A helper function that calculates the transformation matrix from one joint to the next.
+    getTransformationMatrix({d, a, theta, alpha}) {
+        const ct = Math.cos(theta);
+        const st = Math.sin(theta);
+        const ca = Math.cos(alpha);
+        const sa = Math.sin(alpha);
+
         return [
-            [
-                cosTheta, - sinTheta,
-                0,
-                0
-            ],
-            [
-                sinTheta, cosTheta, 0, 0
-            ],
-            [
-                0, 0, 1, 0
-            ],
-            [
-                0, 0, 0, 1
-            ],
+        [ct, -st*ca, st*sa, a*ct],
+        [st, ct*ca, -ct*sa, a*st],
+        [0, sa, ca, d],
+        [0, 0, 0, 1]
         ];
     }
-    // Function to create a 4x4 rotation matrix for rotation about the X-axis (alpha in radians)
-    rotationMatrixX(alpha) {
-        const cosAlpha = Math.cos(alpha);
-        const sinAlpha = Math.sin(alpha);
-        return [
-            [
-                1, 0, 0, 0
-            ],
-            [
-                0,
-                cosAlpha, - sinAlpha,
-                0
-            ],
-            [
-                0, sinAlpha, cosAlpha, 0
-            ],
-            [
-                0, 0, 0, 1
-            ],
-        ];
-    }
+    // A helper function that multiplies two 4x4 matrices.
+    multiplyMatrices(a, b) {
+        let result = [];
 
-    // Function to create a 4x4 translation matrix
-    translationMatrix(dx, dy, dz) {
-        return [
-            [
-                1, 0, 0, dx
-            ],
-            [
-                0, 1, 0, dy
-            ],
-            [
-                0, 0, 1, dz
-            ],
-            [
-                0, 0, 0, 1
-            ],
-        ];
-    }
-
-    forwardKinematics() {
-        let thetas = this.getJointAngles();
-        // Initialize the transformation matrix as an identity matrix (4x4)
-        let T_total = numeric.identity(4);
-
-        // Loop through each joint
-        for (let i = 0; i < this.DHParameters.length; i++) {
-            const {d, a, theta, alpha} = this.DHParameters[i];
-            const t_theta = theta + thetas[i];
-            // Compute the transformation matrix for the current joint i
-            const t_current = numeric.dot(numeric.dot(numeric.dot(numeric.dot(numeric.dot(numeric.dot(this.translationMatrix(0, 0, d), this.rotationMatrixZ(t_theta)), this.translationMatrix(a, 0, 0)), this.rotationMatrixX(alpha)), numeric.identity(4)), numeric.identity(4)), numeric.identity(4));
-
-            // Update the total transformation matrix
-            T_total = numeric.dot(T_total,t_current);
+        for(let i = 0; i < 4; i++) {
+            result[i] = [];
+            for(let j = 0; j < 4; j++) {
+                let sum = 0;
+                for(let k = 0; k < 4; k++) {
+                    sum += a[i][k] * b[k][j];
+                }
+                result[i][j] = sum;
+            }
         }
 
-        // Extract the position and orientation from the final transformation matrix
-        const position = [
-            T_total[0][3],
-            T_total[1][3],
-            T_total[2][3]
-        ];
-        const roll = Math.atan2(T_total[2][1], T_total[2][2]);
-        const pitch = Math.atan2(- T_total[2][0], Math.sqrt(T_total[2][1] ** 2 + T_total[2][2] ** 2));
-        const yaw = Math.atan2(T_total[1][0], T_total[0][0]);
+        return result;
+    }
 
-        // Return the result as an object
-        return {
-            position: position,
-            orientation: [roll, pitch, yaw]
+    // 257, 289.5, 0
+    forwardKinematics() {
+        let jointAngles = this.getJointAngles();
+        // Initialize the transformation matrix as an identity matrix (4x4)
+        let transformMatrix = [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ];
+
+        // Calculate the overall transformation matrix
+        for (let i = 0; i < 6; i++) {
+            const DHParameters = {
+                d: this.DHParameters[i].d,
+                a: this.DHParameters[i].a,
+                theta: jointAngles[i] + this.DHParameters[i].theta,
+                alpha: this.DHParameters[i].alpha
+            };
+            console.log(DHParameters);
+
+            const nextTransformMatrix = this.getTransformationMatrix(DHParameters);
+            transformMatrix = this.multiplyMatrices(transformMatrix, nextTransformMatrix);
+        }
+
+        // Extract the position from the final transformation matrix
+        const position = {
+            x: transformMatrix[0][3],
+            y: transformMatrix[2][3],
+            z: -transformMatrix[1][3]
         };
+
+        const yaw = Math.atan2(transformMatrix[1][0], transformMatrix[0][0]);
+        const pitch = Math.atan2(-transformMatrix[2][0], Math.sqrt(Math.pow(transformMatrix[2][1], 2) + Math.pow(transformMatrix[2][2], 2)));
+        const roll = Math.atan2(transformMatrix[2][1], transformMatrix[2][2]);
+
+            const orientation = {
+            pitch: pitch,
+            yaw: yaw,
+            roll: roll
+        };
+
+        // Return the position and orientation
+        return { position, orientation };
+
     }
     update() { // animate();
 

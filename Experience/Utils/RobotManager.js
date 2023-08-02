@@ -51,11 +51,11 @@ export default class RobotManager extends EventEmitter {
 
             const robotFolder = this.toolBar.addFolder(`j${i}`);
 
-            robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2);
+            const controller = robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI/6 );
 
             robotFolder.add(tools, 'Save');
             robotFolder.add(tools, 'Reset');
-            robotFolder.close();
+            controller.onChange((v) => {console.log(this.ik.forwardKinematics().position);});
         }
     }
 
@@ -65,10 +65,6 @@ export default class RobotManager extends EventEmitter {
             this.group.set(child.name, child.clone());
             this.group.get(child.name).scale.set(1, 1, 1);
         });
-        let j6 = new THREE.AxesHelper(75);
-        j6.position.set(-80, 0, 13);
-        j6.rotation.set(0, Math.PI, 0);
-        this.group.set("j6", j6);
         this.setMotionGroup();
     }
 
@@ -80,12 +76,12 @@ export default class RobotManager extends EventEmitter {
         this.group.get("j2").attach(this.group.get("j3"));
         this.group.get("j3").attach(this.group.get("j4"));
         this.group.get("j4").attach(this.group.get("j5"));
-        this.group.get("j5").add(this.group.get("j6"));
+        this.group.get("j5").attach(this.group.get("j6"));
         this.motionGroup.scale.set(.01, .01, .01);
         this.motionGroup.position.set(0, 0, 0);
         this.scene.add(this.motionGroup);
         // this.ik.addHelperTools();
-        console.log(this.ik.forwardKinematics());
+        console.log(this.ik.forwardKinematics().position);
         let test = new THREE.Vector3(0, 0, 0);
         console.log(this.group.get("j6").getWorldPosition(test));
     }
