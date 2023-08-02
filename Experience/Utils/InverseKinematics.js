@@ -25,68 +25,45 @@ export default class InverseKinematics extends EventEmitter {
         this.DHParameters = [
             // Link 1 (Base to Joint 1)
             {
-                a: 35, // Link length (in milimeters) Distance from axis of rotation of current joint to next joint
-                d: 87, // Link offset (in milimeters) Distance along axis of rotation from current joint to next joint 
-                offset: 0 // Offset (eccentricity) of link 1 from the axis of rotation (in milimeters)
+                d: 87, // Offset distance along the previous Z, from old joint to new joint center. [mm]
+                a: 35, // Length along new X, from old joint to new joint center. [mm]
+                theta: 0, // Angle about previous Z-axis, from old X-axis to new X-axis. [radians]
+                alpha: Math.PI / 2 // Angle about new X-axis, from old Z-axis to new Z-axis. [radians]
             },
             // Link 2 (Joint 1 to Joint 2)
             {
-                a: 0,
-                d: 147.25,
-                offset: 0
+                d: 0,
+                a: 147.25,
+                theta: 0,
+                alpha: 0
             },
             // Link 3 (Joint 2 to Joint 3)
             {
-                a: 0,
-                d: 55.5,
-                offset: 0
+                d: 0,
+                a: 55.5,
+                theta: Math.PI / 2,
+                alpha: 0
             },
             // Link 4 (Joint 3 to Joint 4)
             {
-                a: 152,
-                d: 0,
-                offset: 0
+                d: 142,
+                a: 0,
+                theta: 0,
+                alpha: -Math.PI / 2
             },
             // Link 5 (Joint 4 to Joint 5)
             {
-                a: -6,
                 d: 0,
-                offset: 0
+                a: 0,
+                theta: 0,
+                alpha: Math.PI / 2
             },
             // Link 6 (Joint 5 to End Effector)
             {
-                a: 76,
-                d: 0,
-                offset: 0
-            },
-        ];
-
-        // Joint limits ((min and max angles in radians))
-        this.jointLimits = [
-            {
-                min: 0,
-                max: Math.PI
-            },
-            { // Joint 1 limits
-                min: -Math.PI / 2,
-                max: Math.PI / 2
-            },
-            { // Joint 2 limits
-                min: -Math.PI / 2,
-                max: Math.PI / 2
-            },
-            { // Joint 3 limits
-                min: -Math.PI / 2,
-                max: Math.PI / 2
-            }, { // Joint 4 limits
-                min: -Math.PI / 2,
-                max: Math.PI / 2
-            }, { // Joint 5 limits
-                min: -Math.PI / 2,
-                max: Math.PI / 2
-            }, { // Joint 6 limits
-                min: -Math.PI / 2,
-                max: Math.PI / 2
+                d: 76,
+                a: 0,
+                theta: 0,
+                alpha: 0
             },
         ];
     }
@@ -94,21 +71,34 @@ export default class InverseKinematics extends EventEmitter {
     addIKGUI() {
         let IKToolBar = this.toolBar.addFolder("IK Tools");
         let IK = this;
+        const axesHelper = new THREE.AxesHelper(200);
         const tools = {
+            joint: 1,
+            axesHelper: axesHelper,
             calculateFK() {
                 console.log(IK.forwardKinematics());
+            },
+            addHelperTools() {
+                let object = IK.robotJointMap.get(`j${this.joint}`);
+                if (object !== undefined) 
+                    object.add(axesHelper);
+            },
+            DeleteHelperTools() {
+                axesHelper.removeFromParent();
             }
         }
+        IKToolBar.add(tools, "joint", 1, 6).name("Joint Number");
         IKToolBar.add(tools, "calculateFK");
+        IKToolBar.add(tools, "addHelperTools");
+        IKToolBar.add(tools, "DeleteHelperTools");
     }
 
     addHelperTools() {
         for (let i = 1; i < 7; i++) {
             let object = this.robotJointMap.get(`j${i}`);
-            const axesHelper = new THREE.AxesHelper(100);
+            const axesHelper = new THREE.AxesHelper(200);
             if (object !== undefined) 
                 object.add(axesHelper);
-            
         }
     }
 
@@ -145,6 +135,8 @@ export default class InverseKinematics extends EventEmitter {
             } else 
                 console.log(`j${i} is undefined`);
             
+
+
         }
         return twistAngles;
     }
@@ -212,27 +204,25 @@ export default class InverseKinematics extends EventEmitter {
 
     forwardKinematics() {
         let thetas = this.getJointAngles();
-        let alphas = this.getTwistAngles();
         // Initialize the transformation matrix as an identity matrix (4x4)
         let T_total = numeric.identity(4);
 
         // Loop through each joint
         for (let i = 0; i < this.DHParameters.length; i++) {
-            const {a, d, offset} = this.DHParameters[i];
-            const theta = thetas[i];
+            const {d, a, theta, alpha} = this.DHParameters[i];
+            const t_theta = theta + thetas[i];
             // Compute the transformation matrix for the current joint i
-            const T_current = numeric.dot(numeric.dot(numeric.dot(numeric.dot(numeric.dot(numeric.dot(T_total, this.rotationMatrixZ(theta + offset)), this.translationMatrix(0, 0, d)), this.translationMatrix(a, 0, 0)), numeric.identity(4) // No need for rotation about the X-axis since alpha is removed from DH parameters
-            ), numeric.identity(4)), numeric.identity(4));
+            const t_current = numeric.dot(numeric.dot(numeric.dot(numeric.dot(numeric.dot(numeric.dot(this.translationMatrix(0, 0, d), this.rotationMatrixZ(t_theta)), this.translationMatrix(a, 0, 0)), this.rotationMatrixX(alpha)), numeric.identity(4)), numeric.identity(4)), numeric.identity(4));
 
             // Update the total transformation matrix
-            T_total = T_current;
+            T_total = numeric.dot(T_total,t_current);
         }
 
         // Extract the position and orientation from the final transformation matrix
         const position = [
             T_total[0][3],
-            T_total[2][3],
-            T_total[1][3]
+            T_total[1][3],
+            T_total[2][3]
         ];
         const roll = Math.atan2(T_total[2][1], T_total[2][2]);
         const pitch = Math.atan2(- T_total[2][0], Math.sqrt(T_total[2][1] ** 2 + T_total[2][2] ** 2));

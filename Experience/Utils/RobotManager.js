@@ -84,7 +84,7 @@ export default class RobotManager extends EventEmitter {
         this.motionGroup.scale.set(.01, .01, .01);
         this.motionGroup.position.set(0, 0, 0);
         this.scene.add(this.motionGroup);
-        this.ik.addHelperTools();
+        // this.ik.addHelperTools();
         console.log(this.ik.forwardKinematics());
         let test = new THREE.Vector3(0, 0, 0);
         console.log(this.group.get("j6").getWorldPosition(test));
