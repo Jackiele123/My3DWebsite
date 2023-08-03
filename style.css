@@ -75,7 +75,19 @@ svg{
   width: 100%;
   height: 100%;
 }
-
+.display{
+  background-color: green;
+  color: white;
+  font-size: larger;
+  padding-left: .75vw;
+  padding-top: .5vh;
+  width: 6vw;
+  height: 9vh;
+  position: fixed;
+  left: 2vw;
+  top: 0;
+  z-index: 99999999999999999;
+}
 .hidden{
   display: none;
 }

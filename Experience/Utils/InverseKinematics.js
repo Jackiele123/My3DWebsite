@@ -4,6 +4,7 @@ import GUI from "lil-gui";
 
 import {EventEmitter} from "events";
 import Experience from "../Experience.js"
+import { abs } from "numeric";
 
 export default class InverseKinematics extends EventEmitter {
     constructor(robotJointMap) {
@@ -19,6 +20,7 @@ export default class InverseKinematics extends EventEmitter {
         this.robot = this.resources.items.robot;
         this.components = this.robot.children[0];
         this.robotJointMap = robotJointMap;
+
         this.addIKGUI();
         // DH parameters for a 6DOF robot arm with offset link 1
         this.DHParameters = [
@@ -82,19 +84,21 @@ export default class InverseKinematics extends EventEmitter {
                     this.joint
                 }`);
                 if (object !== undefined) 
-                    object.add(axesHelper);
-                
-
-
+                    object.add(axesHelper);                
             },
             DeleteHelperTools() {
                 axesHelper.removeFromParent();
             }
         }
-        IKToolBar.add(tools, "joint", 1, 6, 1).name("Joint Number");
+        // IKToolBar.add(tools, "yFKPosition",-500,500);
+        // IKToolBar.add(tools, "zFKPosition",-500,500);
+        // IKToolBar.add(tools, "xFKOrientation", -Math.PI * 2, Math.PI * 2);
+        // IKToolBar.add(tools, "yFKOrientation", -Math.PI * 2, Math.PI * 2);
+        // IKToolBar.add(tools, "zFKOrientation", -Math.PI * 2, Math.PI * 2);
+        // IKToolBar.add(tools, "joint", 1, 6, 1).name("Joint Number");
         IKToolBar.add(tools, "calculateFK");
-        IKToolBar.add(tools, "addHelperTools");
-        IKToolBar.add(tools, "DeleteHelperTools");
+        // IKToolBar.add(tools, "addHelperTools");
+        // IKToolBar.add(tools, "DeleteHelperTools");
     }
 
     addHelperTools() {
@@ -199,34 +203,25 @@ export default class InverseKinematics extends EventEmitter {
                 theta: jointAngles[i] + this.DHParameters[i].theta,
                 alpha: this.DHParameters[i].alpha
             };
-            console.log(DHParameters);
 
             const nextTransformMatrix = this.getTransformationMatrix(DHParameters);
             transformMatrix = this.multiplyMatrices(transformMatrix, nextTransformMatrix);
         }
 
         // Extract the position from the final transformation matrix
-        const position = {
-            x: transformMatrix[0][3],
-            y: transformMatrix[2][3],
-            z: -transformMatrix[1][3]
-        };
+        const position = new THREE.Vector3(transformMatrix[0][3], transformMatrix[2][3], -transformMatrix[1][3]);
 
         const yaw = Math.atan2(transformMatrix[1][0], transformMatrix[0][0]);
         const pitch = Math.atan2(-transformMatrix[2][0], Math.sqrt(Math.pow(transformMatrix[2][1], 2) + Math.pow(transformMatrix[2][2], 2)));
         const roll = Math.atan2(transformMatrix[2][1], transformMatrix[2][2]);
 
-            const orientation = {
-            pitch: pitch,
-            yaw: yaw,
-            roll: roll
-        };
+        const orientation = new THREE.Euler(roll, pitch, yaw, 'XYZ');
 
         // Return the position and orientation
-        return { position, orientation };
+        return  { position, orientation };
 
     }
     update() { // animate();
-
+        document.querySelector(".display").innerHTML = "X: " + Math.round(this.forwardKinematics().position.x) + " Y: " + Math.round(this.forwardKinematics().position.y) + " Z: " + Math.round(this.forwardKinematics().position.z);
     }
 }

@@ -51,11 +51,9 @@ export default class RobotManager extends EventEmitter {
 
             const robotFolder = this.toolBar.addFolder(`j${i}`);
 
-            const controller = robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI/6 );
-
+            robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI/6 );
             robotFolder.add(tools, 'Save');
             robotFolder.add(tools, 'Reset');
-            controller.onChange((v) => {console.log(this.ik.forwardKinematics().position);});
         }
     }
 
@@ -80,10 +78,6 @@ export default class RobotManager extends EventEmitter {
         this.motionGroup.scale.set(.01, .01, .01);
         this.motionGroup.position.set(0, 0, 0);
         this.scene.add(this.motionGroup);
-        // this.ik.addHelperTools();
-        console.log(this.ik.forwardKinematics().position);
-        let test = new THREE.Vector3(0, 0, 0);
-        console.log(this.group.get("j6").getWorldPosition(test));
     }
 
     update() { // animate();
@@ -92,5 +86,6 @@ export default class RobotManager extends EventEmitter {
                 controller.updateDisplay();
             });
         });
+        this.ik.update();
     }
 }
