@@ -21,17 +21,17 @@ export default class RobotManager extends EventEmitter {
 
 
         this.motionGroup = new THREE.Group();
-        this.group = new Map();
+        this.controlRobot = new Map();
 
         this.toolBar = this.experience.toolBar;
-        this.ik = new InverseKinematics(this.group);
+        this.ik = new InverseKinematics(this.controlRobot);
         this.cloneModel();
         this.setToolBar();
     }
 
     setToolBar() {
         for (let i = 1; i < 7; i++) {
-            let object = this.group.get(`j${i}`);
+            let object = this.controlRobot.get(`j${i}`);
             const tools = {
                 xPosition: object.position.x,
                 yPosition: object.position.y,
@@ -60,21 +60,21 @@ export default class RobotManager extends EventEmitter {
     cloneModel() {
         this.components.children.forEach((child) => {
             child.name = child.name.replace(/\(Default\).*$/, "").trim()
-            this.group.set(child.name, child.clone());
-            this.group.get(child.name).scale.set(1, 1, 1);
+            this.controlRobot.set(child.name, child.clone());
+            this.controlRobot.get(child.name).scale.set(1, 1, 1);
         });
         this.setMotionGroup();
     }
 
     setMotionGroup() {
-        this.motionGroup.attach(this.group.get("basegear"));
-        this.motionGroup.attach(this.group.get("basetophousing"));
-        this.motionGroup.attach(this.group.get("j1"));
-        this.group.get("j1").attach(this.group.get("j2"));
-        this.group.get("j2").attach(this.group.get("j3"));
-        this.group.get("j3").attach(this.group.get("j4"));
-        this.group.get("j4").attach(this.group.get("j5"));
-        this.group.get("j5").attach(this.group.get("j6"));
+        this.motionGroup.attach(this.controlRobot.get("basegear"));
+        this.motionGroup.attach(this.controlRobot.get("basetophousing"));
+        this.motionGroup.attach(this.controlRobot.get("j1"));
+        this.controlRobot.get("j1").attach(this.controlRobot.get("j2"));
+        this.controlRobot.get("j2").attach(this.controlRobot.get("j3"));
+        this.controlRobot.get("j3").attach(this.controlRobot.get("j4"));
+        this.controlRobot.get("j4").attach(this.controlRobot.get("j5"));
+        this.controlRobot.get("j5").attach(this.controlRobot.get("j6"));
         this.motionGroup.scale.set(.01, .01, .01);
         this.motionGroup.position.set(0, 0, 0);
         this.scene.add(this.motionGroup);

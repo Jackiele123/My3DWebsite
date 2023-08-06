@@ -205,8 +205,8 @@ export default class Preloader extends EventEmitter {
     }
     async playSecondIntro() {
         this.moveFlag = false;
-        // await this.secondIntro();
-        await this.skipIntro();
+        await this.secondIntro();
+        // await this.skipIntro();
         this.scaleFlag = false;
         this.emit("enablecontrols");
     }

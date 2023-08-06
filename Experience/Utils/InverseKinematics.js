@@ -90,12 +90,7 @@ export default class InverseKinematics extends EventEmitter {
                 axesHelper.removeFromParent();
             }
         }
-        // IKToolBar.add(tools, "yFKPosition",-500,500);
-        // IKToolBar.add(tools, "zFKPosition",-500,500);
-        // IKToolBar.add(tools, "xFKOrientation", -Math.PI * 2, Math.PI * 2);
-        // IKToolBar.add(tools, "yFKOrientation", -Math.PI * 2, Math.PI * 2);
-        // IKToolBar.add(tools, "zFKOrientation", -Math.PI * 2, Math.PI * 2);
-        // IKToolBar.add(tools, "joint", 1, 6, 1).name("Joint Number");
+
         IKToolBar.add(tools, "calculateFK");
         // IKToolBar.add(tools, "addHelperTools");
         // IKToolBar.add(tools, "DeleteHelperTools");
@@ -211,17 +206,32 @@ export default class InverseKinematics extends EventEmitter {
         // Extract the position from the final transformation matrix
         const position = new THREE.Vector3(transformMatrix[0][3], transformMatrix[2][3], -transformMatrix[1][3]);
 
-        const yaw = Math.atan2(transformMatrix[1][0], transformMatrix[0][0]);
-        const pitch = Math.atan2(-transformMatrix[2][0], Math.sqrt(Math.pow(transformMatrix[2][1], 2) + Math.pow(transformMatrix[2][2], 2)));
-        const roll = Math.atan2(transformMatrix[2][1], transformMatrix[2][2]);
+        const yaw = Math.atan2(transformMatrix[2][0], transformMatrix[0][0]);
+        const pitch = Math.atan2(-transformMatrix[1][0], Math.sqrt(Math.pow(transformMatrix[1][1], 2) + Math.pow(transformMatrix[1][2], 2)));
+        const roll = Math.atan2(transformMatrix[1][1], transformMatrix[1][2]);
+        const xAxis = new THREE.Vector3(transformMatrix[0][0], transformMatrix[0][2], transformMatrix[0][1]);
+        const yAxis = new THREE.Vector3(transformMatrix[1][0], transformMatrix[1][2], transformMatrix[1][1]);
+        const zAxis = new THREE.Vector3(transformMatrix[2][0], transformMatrix[2][2], transformMatrix[2][1]);
 
         const orientation = new THREE.Euler(roll, pitch, yaw, 'XYZ');
-
         // Return the position and orientation
         return  { position, orientation };
 
     }
     update() { // animate();
-        document.querySelector(".display").innerHTML = "X: " + Math.round(this.forwardKinematics().position.x) + " Y: " + Math.round(this.forwardKinematics().position.y) + " Z: " + Math.round(this.forwardKinematics().position.z);
+        function styleData(data){
+            return data.toFixed(1);
+        }
+        function toDegrees(radians) {
+            if ((radians * (180 / Math.PI)))
+            return (radians * (180 / Math.PI)).toFixed(1);
+        }
+
+        document.getElementById("1").innerHTML = "X: " + styleData(this.forwardKinematics().position.x);
+        document.getElementById("2").innerHTML = " Y: " + styleData(this.forwardKinematics().position.y);
+        document.getElementById("3").innerHTML = " Z: " + styleData(this.forwardKinematics().position.z);
+        document.getElementById("4").innerHTML = "X: " + styleData(this.forwardKinematics().orientation.x);
+        document.getElementById("5").innerHTML = " Y: " + styleData(this.forwardKinematics().orientation.y);
+        document.getElementById("6").innerHTML = " Z: " + styleData(this.forwardKinematics().orientation.z);
     }
 }

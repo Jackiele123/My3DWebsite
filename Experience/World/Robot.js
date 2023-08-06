@@ -10,7 +10,8 @@ export default class Robot {
         this.resources = this.experience.resources;
         this.time = this.experience.time;
         this.robotManager = new RobotManager();
-        this.robot = this.robotManager.robot;
+        this.controlRobot = this.robotManager.controlRobot;
+        this.robot = this.robotManager.motionGroup;
         // this.components = this.robot.children[0];
         // console.log(this.components);
         // this.group = new Map();
@@ -33,9 +34,8 @@ export default class Robot {
         rectLight.rotation.x = -Math.PI / 2;
         rectLight.rotation.z = Math.PI / 4;
 
-        this.robot.add(rectLight);
+        //this.robot.add(rectLight);
         this.rectLight = rectLight;
-        //this.scene.add(this.robot);
 
     }
 

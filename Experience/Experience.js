@@ -35,7 +35,10 @@ export default class Experience {
         this.theme = new Theme();
         this.world = new World();
         this.toolBar = new GUI({width: 250})
+        this.toolBar.hide();
         this.devMode = false;
+        this.presentationMode = true;
+        this.wasPresentationMode = true;
         // this.controls = new Controls();
         this.preloader = new Preloader();
         this.preloader.on("enablecontrols", () => {
@@ -49,6 +52,8 @@ export default class Experience {
         this.time.on("update", () => {
             this.update();
         });
+
+        document.querySelector(".control-button").addEventListener('click', () => {this.presentationMode = !this.presentationMode;});
     }
 
     resize() {
