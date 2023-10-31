@@ -32,6 +32,7 @@ export default class RobotManager extends EventEmitter {
     setToolBar() {
         for (let i = 1; i < 7; i++) {
             let object = this.controlRobot.get(`j${i}`);
+            let target = 0;
             const tools = {
                 xPosition: object.position.x,
                 yPosition: object.position.y,
@@ -39,6 +40,7 @@ export default class RobotManager extends EventEmitter {
                 xRotation: object.rotation.x,
                 yRotation: object.rotation.y,
                 zRotation: object.rotation.z,
+                desiredOrientation: target,
                 Save() {
                     console.log(object.position);
                     console.log(object.rotation);
@@ -46,7 +48,7 @@ export default class RobotManager extends EventEmitter {
                 Reset() {
                     object.position.set(tools.xPosition, tools.yPosition, tools.zPosition);
                     object.rotation.set(tools.xRotation, tools.yRotation, tools.zRotation);
-                }
+                },
             };
 
             const robotFolder = this.toolBar.addFolder(`j${i}`);

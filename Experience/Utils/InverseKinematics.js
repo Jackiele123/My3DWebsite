@@ -20,6 +20,7 @@ export default class InverseKinematics extends EventEmitter {
         this.robot = this.resources.items.robot;
         this.components = this.robot.children[0];
         this.robotJointMap = robotJointMap;
+        this.joints = [];
 
         this.addIKGUI();
         // DH parameters for a 6DOF robot arm with offset link 1
@@ -74,6 +75,12 @@ export default class InverseKinematics extends EventEmitter {
         let IK = this;
         const axesHelper = new THREE.AxesHelper(200);
         const tools = {
+            target1: 0,
+            target2: 0,
+            target3: 0,
+            target4: 0,
+            target5: 0,
+            target6: 0, 
             joint: 1,
             axesHelper: axesHelper,
             calculateFK() {
@@ -88,10 +95,20 @@ export default class InverseKinematics extends EventEmitter {
             },
             DeleteHelperTools() {
                 axesHelper.removeFromParent();
+            },
+            RotateJoints(){
+                let target = [tools.target1*(Math.PI/180),tools.target2*(Math.PI/180),tools.target3*(Math.PI/180),tools.target4*(Math.PI/180),tools.target5*(Math.PI/180),tools.target6*(Math.PI/180)];
+                IK.rotateJoint(target);
             }
         }
-
+        IKToolBar.add(tools, "target1", -180, 180, 5 );
+        IKToolBar.add(tools, "target2", -180, 180, 5 );
+        IKToolBar.add(tools, "target3", -180, 180, 5 );
+        IKToolBar.add(tools, "target4", -180, 180, 5 );
+        IKToolBar.add(tools, "target5", -180, 180, 5 );
+        IKToolBar.add(tools, "target6", -180, 180, 5 );
         IKToolBar.add(tools, "calculateFK");
+        IKToolBar.add(tools, "RotateJoints");
         // IKToolBar.add(tools, "addHelperTools");
         // IKToolBar.add(tools, "DeleteHelperTools");
     }
@@ -102,9 +119,6 @@ export default class InverseKinematics extends EventEmitter {
             const axesHelper = new THREE.AxesHelper(200);
             if (object !== undefined) 
                 object.add(axesHelper);
-            
-
-
         }
     }
 
@@ -121,12 +135,10 @@ export default class InverseKinematics extends EventEmitter {
                 jointAngles.push(rotation.z);
             } else 
                 console.log(`j${i} is undefined`);
-            
-
-
         }
         return jointAngles;
     }
+
     getTwistAngles() {
         let twistAngles = [];
         for (let i = 1; i < 7; i++) {
@@ -217,6 +229,14 @@ export default class InverseKinematics extends EventEmitter {
         // Return the position and orientation
         return  { position, orientation };
 
+    }
+
+    rotateJoint(target) {
+        let alpha = 0.1;
+        for (let i = 1; i < 7; i++) {
+            let object = this.robotJointMap.get(`j${i}`);
+            object.rotation.z += alpha* (target[i-1]-object.rotation.z);
+        }
     }
     update() { // animate();
         function styleData(data){

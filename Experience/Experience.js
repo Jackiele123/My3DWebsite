@@ -36,13 +36,14 @@ export default class Experience {
         this.world = new World();
         this.toolBar = new GUI({width: 250})
         this.toolBar.hide();
-        this.devMode = false;
+        this.devMode = true;
         this.presentationMode = true;
         this.wasPresentationMode = true;
         // this.controls = new Controls();
         this.preloader = new Preloader();
         this.preloader.on("enablecontrols", () => {
             this.controls = new Controls();
+            this.presentationMode = !this.presentationMode;
         });
 
         this.sizes.on("resize", () => {
