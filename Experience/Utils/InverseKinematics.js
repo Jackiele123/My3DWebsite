@@ -20,8 +20,10 @@ export default class InverseKinematics extends EventEmitter {
         this.robot = this.resources.items.robot;
         this.components = this.robot.children[0];
         this.robotJointMap = robotJointMap;
-        this.joints = [];
-
+        console.log(this.robotJointMap);
+        this.boundingBoxes = this.resources.boundingBoxes;
+        console.log(this.boundingBoxes);
+        this.tempBoundingBoxVisuals = [];
         this.addIKGUI();
         // DH parameters for a 6DOF robot arm with offset link 1
         this.DHParameters = [
@@ -70,6 +72,7 @@ export default class InverseKinematics extends EventEmitter {
         ];
     }
 
+    
     addIKGUI() {
         let IKToolBar = this.toolBar.addFolder("IK Tools");
         let IK = this;
@@ -77,7 +80,7 @@ export default class InverseKinematics extends EventEmitter {
         const tools = {
             target1: 0,
             target2: 0,
-            target3: 0,
+            target3: 90,
             target4: 0,
             target5: 0,
             target6: 0, 
@@ -99,6 +102,7 @@ export default class InverseKinematics extends EventEmitter {
             RotateJoints(){
                 let target = [tools.target1*(Math.PI/180),tools.target2*(Math.PI/180),tools.target3*(Math.PI/180),tools.target4*(Math.PI/180),tools.target5*(Math.PI/180),tools.target6*(Math.PI/180)];
                 IK.rotateJoint(target);
+                IK.checkSelfCollisions();
             }
         }
         IKToolBar.add(tools, "target1", -180, 180, 5 );
@@ -191,6 +195,123 @@ export default class InverseKinematics extends EventEmitter {
         return result;
     }
 
+    createIndependentMeshesFromBoundingBoxes() {
+        // Array to store the new independent meshes
+        this.independentMeshes = [];
+    
+        this.boundingBoxes.forEach((mesh, key) => {
+            // Clone the original mesh
+            const meshCopy = mesh.clone();
+    
+            // If the mesh has a parent, detach it to make it independent
+            if (meshCopy.parent) {
+                meshCopy.parent.remove(meshCopy);
+            }
+    
+            // Ensure world matrix is updated
+            meshCopy.updateMatrixWorld(true);
+    
+            // Compute local bounding box
+            const localBoundingBox = new THREE.Box3().setFromObject(meshCopy);
+    
+            // Get the size and center of the bounding box
+            const boxSize = localBoundingBox.getSize(new THREE.Vector3());
+            const boxCenter = localBoundingBox.getCenter(new THREE.Vector3());
+    
+            // Create a new mesh using the size and center of the bounding box
+            const boxGeometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+            const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true });
+            const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+            boxMesh.position.copy(boxCenter);
+    
+            // Add the new mesh to the scene
+            this.scene.add(boxMesh);
+    
+            // Store the new mesh in the independentMeshes array
+            this.independentMeshes.push(boxMesh);
+        });
+    }
+
+    clearTempBoundingBoxVisuals() {
+        this.tempBoundingBoxVisuals.forEach((boxMesh) => {
+            this.scene.remove(boxMesh);
+        });
+        this.tempBoundingBoxVisuals = [];
+    }
+
+    visualizeBoundingBox(boundingBox, color) {
+        const boxSize = boundingBox.getSize(new THREE.Vector3());
+        const boxCenter = boundingBox.getCenter(new THREE.Vector3());
+        const boxGeometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+        const boxMaterial = new THREE.MeshBasicMaterial({ color: color, wireframe: true });
+        const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+        boxMesh.position.copy(boxCenter);
+        this.scene.add(boxMesh);
+        this.tempBoundingBoxVisuals.push(boxMesh);
+    }
+    
+    checkSelfCollisions() {
+        // Recompute bounding boxes for each mesh in the robot
+        this.createIndependentMeshesFromBoundingBoxes();
+        const updatedBoundingBoxes = new Map();
+        console.log(this.boundingBoxes);
+        this.boundingBoxes.forEach((mesh, key) => {
+            // Ensure world matrix is updated
+            mesh.updateMatrixWorld(true);
+            
+            // Compute local bounding box
+            const localBoundingBox = new THREE.Box3().setFromObject(mesh);
+        
+            // Visualize the bounding box before transformation (in red)
+            this.visualizeBoundingBox(localBoundingBox.clone(), 0xff0000);
+        
+            // Print the bounding box before transformation
+            console.log("Before:", localBoundingBox);
+        
+            // Apply the world matrix to the bounding box
+            localBoundingBox.applyMatrix4(mesh.matrixWorld);
+        
+            // Visualize the bounding box after transformation (in green)
+            this.visualizeBoundingBox(localBoundingBox, 0x00ff00);
+        
+            // Print the bounding box after transformation
+            console.log("After:", localBoundingBox);
+        
+            // Add the transformed bounding box to the updatedBoundingBoxes map
+            updatedBoundingBoxes.set(key, localBoundingBox);
+        });
+    
+        // Check for collisions between bounding boxes
+        let collisionDetected = false;
+        const keys = Array.from(updatedBoundingBoxes.keys());
+        for (let i = 0; i < keys.length; i++) {
+            for (let j = i + 1; j < keys.length; j++) {
+                if (updatedBoundingBoxes.get(keys[i]).intersectsBox(updatedBoundingBoxes.get(keys[j]))) {
+                    // console.log(`Collision detected between ${keys[i]} and ${keys[j]}`);
+                    collisionDetected = true;
+                }
+            }
+        }
+    
+        this.clearTempBoundingBoxVisuals();
+    
+        // Create and display new temporary visuals
+        updatedBoundingBoxes.forEach((boundingBox) => {
+            const boxSize = boundingBox.getSize(new THREE.Vector3());
+            const boxCenter = boundingBox.getCenter(new THREE.Vector3());
+            const boxGeometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+            const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true });
+            const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+            boxMesh.position.copy(boxCenter);
+            this.scene.add(boxMesh);
+            this.tempBoundingBoxVisuals.push(boxMesh);
+        });
+    
+        return collisionDetected;
+    }
+    
+    
+
     // 257, 289.5, 0
     forwardKinematics() {
         let jointAngles = this.getJointAngles();
@@ -233,9 +354,13 @@ export default class InverseKinematics extends EventEmitter {
 
     rotateJoint(target) {
         let alpha = 0.1;
+        // for (let i = 1; i < 7; i++) {
+        //     let object = this.robotJointMap.get(`j${i}`);
+        //     object.rotation.z += alpha* (target[i-1]-object.rotation.z);
+        // }
         for (let i = 1; i < 7; i++) {
             let object = this.robotJointMap.get(`j${i}`);
-            object.rotation.z += alpha* (target[i-1]-object.rotation.z);
+            object.rotation.z = target[i-1];
         }
     }
     update() { // animate();
