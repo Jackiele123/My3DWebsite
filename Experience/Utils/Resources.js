@@ -97,7 +97,7 @@ export default class Resources extends EventEmitter {
                     });
     
                     // Compute and visualize bounding boxes for the loaded .3mf model
-                    this.computeAndVisualizeBoundingBox(file);
+                    //this.computeAndVisualizeBoundingBox(file);
     
                     this.singleAssetLoaded(asset, file);
                 });

@@ -22,6 +22,8 @@ export default class RobotManager extends EventEmitter {
 
         this.motionGroup = new THREE.Group();
         this.controlRobot = new Map();
+        this.boundingBox = [];
+        this.boundingBoxHelpers = [];
 
         this.toolBar = this.experience.toolBar;
         this.ik = new InverseKinematics(this.controlRobot);
@@ -30,6 +32,7 @@ export default class RobotManager extends EventEmitter {
     }
 
     setToolBar() {
+        let robotManager = this;
         for (let i = 1; i < 7; i++) {
             let object = this.controlRobot.get(`j${i}`);
             let target = 0;
@@ -49,11 +52,17 @@ export default class RobotManager extends EventEmitter {
                     object.position.set(tools.xPosition, tools.yPosition, tools.zPosition);
                     object.rotation.set(tools.xRotation, tools.yRotation, tools.zRotation);
                 },
+                BoundBox(){
+                    robotManager.createBoundingBoxes();
+                }
             };
 
             const robotFolder = this.toolBar.addFolder(`j${i}`);
 
             robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI/6 );
+            if (i === 1) {
+                robotFolder.add(tools, 'BoundBox');
+            }
             robotFolder.add(tools, 'Save');
             robotFolder.add(tools, 'Reset');
         }
@@ -64,6 +73,7 @@ export default class RobotManager extends EventEmitter {
             child.name = child.name.replace(/\(Default\).*$/, "").trim()
             this.controlRobot.set(child.name, child.clone());
             this.controlRobot.get(child.name).scale.set(1, 1, 1);
+            this.generateBoundBoxMesh(this.controlRobot.get(child.name));
         });
         this.setMotionGroup();
     }
@@ -81,6 +91,81 @@ export default class RobotManager extends EventEmitter {
         this.motionGroup.position.set(0, 0, 0);
         this.scene.add(this.motionGroup);
     }
+
+    generateBoundBoxMesh(model){
+        if (model.name === "j6" || model.name === "basegear"){
+            return;
+        }
+        model.traverse(child => {
+            if (child instanceof THREE.Mesh && !child.userData.isBoundingBoxMesh) {
+                if (!child.parent.parent.name.includes("j") && !child.parent.parent.name.includes("basetop")){
+                    return;
+                }
+                let geometry;  // Geometry for the bounding shape
+                const boundingBox = new THREE.Box3().setFromObject(child);
+                const boxSize = boundingBox.getSize(new THREE.Vector3());
+                const boxCenter = boundingBox.getCenter(new THREE.Vector3());
+
+                //Check if the part is circular (based on some criteria, e.g., name)
+                if (model.name.includes("basetop")) {  // Replace "circlePartName" with appropriate criteria
+                    // Create a bounding cylinder
+                    const radius = boxSize.x / 2;  // Assuming x dimension represents the diameter
+                    const height = boxSize.y;
+                    geometry = new THREE.CylinderGeometry(radius, radius, height, 32);
+                } else {
+                    // Create a bounding box
+                    geometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+                }
+                const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(boxCenter);
+                mesh.userData.isBoundingBoxMesh = true;
+                mesh.updateMatrixWorld(true);
+                child.add(mesh);
+            }
+        });
+    }
+
+    createBoundingBoxes() {
+        if (this.boundingBox.length > 0 && this.boundingBoxHelpers.length > 0) {
+            this.boundingBoxHelpers.forEach((box) => {
+                this.scene.remove(box);
+            });
+            this.boundingBox = [];
+            this.boundingBoxHelpers = [];
+        }
+        this.motionGroup.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.userData.isBoundingBoxMesh) {
+                const clone = child.clone();
+                const blueMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true });
+                clone.material = blueMaterial;
+                clone.scale.set(1, 1, 1);
+                child.parent.add(clone);
+
+                const worldScale = new THREE.Vector3();
+                clone.getWorldScale(worldScale);
+                clone.scale.copy(worldScale);
+
+                const worldPosition = new THREE.Vector3();
+                clone.getWorldPosition(worldPosition);
+                clone.position.copy(worldPosition);
+
+                const worldQuaternion = new THREE.Quaternion();
+                clone.getWorldQuaternion(worldQuaternion);
+                clone.quaternion.copy(worldQuaternion);
+
+                clone.parent.remove(clone);
+                //this.scene.add(clone);
+                
+                const boundingBox = new THREE.Box3().setFromObject(clone);
+                const helper = new THREE.Box3Helper( boundingBox, 0xffff00 );
+                this.boundingBoxHelpers.push(helper);
+                this.scene.add( helper );
+                this.boundingBox.push(boundingBox);
+            }
+        });
+    }
+    
 
     update() { // animate();
         this.toolBar.children.forEach((GUI) => {
