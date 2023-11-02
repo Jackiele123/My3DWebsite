@@ -24,6 +24,7 @@ export default class RobotManager extends EventEmitter {
         this.controlRobot = new Map();
         this.boundingBox = [];
         this.boundingBoxHelpers = [];
+        this.meshes = [];
 
         this.toolBar = this.experience.toolBar;
         this.ik = new InverseKinematics(this.controlRobot);
@@ -54,6 +55,65 @@ export default class RobotManager extends EventEmitter {
                 },
                 BoundBox(){
                     robotManager.createBoundingBoxes();
+                },
+                checkCollision() {
+                    var raycaster = new THREE.Raycaster();
+                    var collision = false;
+                    
+                    // Assuming robotManager.meshes contains all the joint meshes
+                    for (let i = 0; i <= 5; i++) {
+                        for (let j = i + 1; j <= 5; j++) {
+                            let mesh1 = robotManager.meshes[i];
+                            let mesh2 = robotManager.meshes[j];
+                    
+                            // Skip collision check if it's the same mesh
+                            if (mesh1 === mesh2) continue;
+
+                            var rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+                            var positions = mesh1.geometry.attributes.position;
+                            var vertex = new THREE.Vector3();
+                            
+                            for (let k = 0; k < positions.count; k++) {
+                                vertex.fromBufferAttribute(positions, k);
+                                var localVertex = vertex.clone();
+                                var globalVertex = localVertex.applyMatrix4(mesh1.matrixWorld);
+                                var directionVector = globalVertex.sub(mesh1.position);
+
+                                // Create a geometry for the ray
+                                var rayGeometry = new THREE.BufferGeometry().setFromPoints([mesh1.position, globalVertex]);
+
+                                // Create a line with the geometry and material
+                                var rayLine = new THREE.Line(rayGeometry, rayMaterial);
+
+                                // Add the line to the scene (you'll want to remove it later)
+                                robotManager.scene.add(rayLine);          
+
+                                raycaster.set(mesh1.position, directionVector.clone().normalize());
+                                var collisionResults = raycaster.intersectObject(mesh2);
+                                console.log(collisionResults);
+                                if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+                                    collision = true;
+                                    rayLine.material.color.set(0x00ff00);
+                                    mesh1.material.color.set(0x00ff00);
+                                    mesh2.material.color.set(0x0000ff);
+                                    console.log(mesh1.parent.parent.parent.name + " and " + mesh2.parent.parent.parent.name + " are colliding.");
+                                    break;
+                                }
+                            }
+                    
+                            // If a collision is detected, break out of the inner loop
+                            if (collision) break;
+                        }
+                    
+                        // If a collision is detected, break out of the outer loop
+                        if (collision) break;
+                    }
+                    
+                    if (collision) {
+                        // Handle the collision
+                    } else {
+                        // No collision detected
+                    }
                 }
             };
 
@@ -62,6 +122,7 @@ export default class RobotManager extends EventEmitter {
             robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI/6 );
             if (i === 1) {
                 robotFolder.add(tools, 'BoundBox');
+                robotFolder.add(tools, 'checkCollision');
             }
             robotFolder.add(tools, 'Save');
             robotFolder.add(tools, 'Reset');
@@ -122,8 +183,10 @@ export default class RobotManager extends EventEmitter {
                 mesh.userData.isBoundingBoxMesh = true;
                 mesh.updateMatrixWorld(true);
                 child.add(mesh);
+                this.meshes.push(mesh);
             }
         });
+        console.log(this.meshes);
     }
 
     createBoundingBoxes() {
