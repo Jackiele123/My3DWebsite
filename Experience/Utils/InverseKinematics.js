@@ -20,6 +20,11 @@ export default class InverseKinematics extends EventEmitter {
         this.robot = this.resources.items.robot;
         this.components = this.robot.children[0];
         this.robotJointMap = robotJointMap;
+
+        this.boundingBox = [];
+        this.boundingBoxHelpers = [];
+        this.meshes = [];
+
         this.addIKGUI();
         // DH parameters for a 6DOF robot arm with offset link 1
         this.DHParameters = [
@@ -90,8 +95,11 @@ export default class InverseKinematics extends EventEmitter {
             target6: 0, 
             joint: 1,
             axesHelper: axesHelper,
-            calculateFK() {
-                console.log(IK.forwardKinematics(IK.getJointAngles()).position);
+            printStuff() {
+                const position = new THREE.Vector3();
+                IK.robotJointMap.get("j6").getWorldPosition(position);
+                console.log(position);
+                //console.log(IK.robotJointMap);
             },
             addHelperTools() {
                 let object = IK.robotJointMap.get(`j${
@@ -120,13 +128,34 @@ export default class InverseKinematics extends EventEmitter {
                     randomAngles = constraints.map(constraint => {
                         return randomAngle(constraint.min, constraint.max);
                     });
+                    let endPosition = new THREE.Vector3();
+                    endPosition = IK.forwardKinematics(randomAngles).position;
+                    endPosition.x = endPosition.x/100;
+                    endPosition.y = endPosition.y/100;
+                    endPosition.z = endPosition.z/100;
+                    if (endPosition.y < 0){
+                        continue;
+                    }
+                    const currAngles = IK.getJointAngles();
+                    IK.rotateJoint(randomAngles);
+                    IK.createBoundingBoxes();
+                    IK.rotateJoint(currAngles);
 
-                    valid = IK.forwardKinematics(randomAngles).position.y > 0;
+                    console.log(endPosition);
+                    if (IK.boundingBox[2].containsPoint(endPosition) || IK.boundingBox[0].containsPoint(endPosition)){
+                        continue;
+                    }
+                    IK.boundingBox.forEach((box) => {
+                        valid = box.min.y > 0;
+                    });
                 }
                 if (valid){
                     IK.rotateJoint(randomAngles);
                     console.log('Random joint angles:', randomAngles.map(angle => angle.toFixed(2)));
                 }
+            },
+            generateBoundingBox(){
+                IK.createBoundingBoxes();
             }
         }
         IKToolBar.add(tools, "target1", -180, 180, 5 );
@@ -135,9 +164,10 @@ export default class InverseKinematics extends EventEmitter {
         IKToolBar.add(tools, "target4", -180, 180, 5 );
         IKToolBar.add(tools, "target5", -180, 180, 5 );
         IKToolBar.add(tools, "target6", -180, 180, 5 );
-        IKToolBar.add(tools, "calculateFK");
+        IKToolBar.add(tools, "printStuff");
         IKToolBar.add(tools, "RotateJoints");
         IKToolBar.add(tools, "randomizeJointRotations");
+        IKToolBar.add(tools, "generateBoundingBox");
         // IKToolBar.add(tools, "addHelperTools");
         // IKToolBar.add(tools, "DeleteHelperTools");
     }
@@ -220,6 +250,46 @@ export default class InverseKinematics extends EventEmitter {
         return result;
     }
 
+    createBoundingBoxes() {
+        if (this.boundingBox.length > 0 && this.boundingBoxHelpers.length > 0) {
+            this.boundingBoxHelpers.forEach((box) => {
+                this.scene.remove(box);
+            });
+            this.boundingBox = [];
+            this.boundingBoxHelpers = [];
+        }
+        this.robotJointMap.forEach((model)=>{
+            model.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.userData.isBoundingBoxMesh) {
+                const clone = child.clone();
+                const blueMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true });
+                clone.material = blueMaterial;
+                clone.scale.set(1, 1, 1);
+                child.parent.add(clone);
+
+                const worldScale = new THREE.Vector3();
+                clone.getWorldScale(worldScale);
+                clone.scale.copy(worldScale);
+
+                const worldPosition = new THREE.Vector3();
+                clone.getWorldPosition(worldPosition);
+                clone.position.copy(worldPosition);
+
+                const worldQuaternion = new THREE.Quaternion();
+                clone.getWorldQuaternion(worldQuaternion);
+                clone.quaternion.copy(worldQuaternion);
+
+                clone.parent.remove(clone);
+                
+                const boundingBox = new THREE.Box3().setFromObject(clone);
+                const helper = new THREE.Box3Helper( boundingBox, 0xffff00 );
+                this.boundingBoxHelpers.push(helper);
+                this.scene.add( helper );
+                this.boundingBox.push(boundingBox);
+            }
+        });
+        });
+    }
     
     checkSelfCollisions() {
 

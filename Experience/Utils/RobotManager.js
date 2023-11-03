@@ -53,9 +53,6 @@ export default class RobotManager extends EventEmitter {
                     object.position.set(tools.xPosition, tools.yPosition, tools.zPosition);
                     object.rotation.set(tools.xRotation, tools.yRotation, tools.zRotation);
                 },
-                BoundBox(){
-                    robotManager.createBoundingBoxes();
-                },
                 checkCollision() {
                     var raycaster = new THREE.Raycaster();
                     var collision = false;
@@ -69,7 +66,6 @@ export default class RobotManager extends EventEmitter {
                             // Skip collision check if it's the same mesh
                             if (mesh1 === mesh2) continue;
 
-                            var rayMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
                             var positions = mesh1.geometry.attributes.position;
                             var vertex = new THREE.Vector3();
                             
@@ -82,18 +78,12 @@ export default class RobotManager extends EventEmitter {
                                 // Create a geometry for the ray
                                 var rayGeometry = new THREE.BufferGeometry().setFromPoints([mesh1.position, globalVertex]);
 
-                                // Create a line with the geometry and material
-                                var rayLine = new THREE.Line(rayGeometry, rayMaterial);
-
                                 // Add the line to the scene (you'll want to remove it later)
                                 robotManager.scene.add(rayLine);          
 
                                 raycaster.set(mesh1.position, directionVector.clone().normalize());
-                                var collisionResults = raycaster.intersectObject(mesh2);
-                                console.log(collisionResults);
                                 if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
                                     collision = true;
-                                    rayLine.material.color.set(0x00ff00);
                                     mesh1.material.color.set(0x00ff00);
                                     mesh2.material.color.set(0x0000ff);
                                     console.log(mesh1.parent.parent.parent.name + " and " + mesh2.parent.parent.parent.name + " are colliding.");
@@ -121,7 +111,6 @@ export default class RobotManager extends EventEmitter {
 
             robotFolder.add(object.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI/6 );
             if (i === 1) {
-                robotFolder.add(tools, 'BoundBox');
                 robotFolder.add(tools, 'checkCollision');
             }
             robotFolder.add(tools, 'Save');
@@ -188,48 +177,7 @@ export default class RobotManager extends EventEmitter {
         });
         console.log(this.meshes);
     }
-
-    createBoundingBoxes() {
-        if (this.boundingBox.length > 0 && this.boundingBoxHelpers.length > 0) {
-            this.boundingBoxHelpers.forEach((box) => {
-                this.scene.remove(box);
-            });
-            this.boundingBox = [];
-            this.boundingBoxHelpers = [];
-        }
-        this.motionGroup.traverse((child) => {
-            if (child instanceof THREE.Mesh && child.userData.isBoundingBoxMesh) {
-                const clone = child.clone();
-                const blueMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true });
-                clone.material = blueMaterial;
-                clone.scale.set(1, 1, 1);
-                child.parent.add(clone);
-
-                const worldScale = new THREE.Vector3();
-                clone.getWorldScale(worldScale);
-                clone.scale.copy(worldScale);
-
-                const worldPosition = new THREE.Vector3();
-                clone.getWorldPosition(worldPosition);
-                clone.position.copy(worldPosition);
-
-                const worldQuaternion = new THREE.Quaternion();
-                clone.getWorldQuaternion(worldQuaternion);
-                clone.quaternion.copy(worldQuaternion);
-
-                clone.parent.remove(clone);
-                //this.scene.add(clone);
-                
-                const boundingBox = new THREE.Box3().setFromObject(clone);
-                const helper = new THREE.Box3Helper( boundingBox, 0xffff00 );
-                this.boundingBoxHelpers.push(helper);
-                this.scene.add( helper );
-                this.boundingBox.push(boundingBox);
-            }
-        });
-    }
     
-
     update() { // animate();
         this.toolBar.children.forEach((GUI) => {
             GUI.controllers.forEach((controller) => {
