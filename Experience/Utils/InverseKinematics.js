@@ -72,6 +72,14 @@ export default class InverseKinematics extends EventEmitter {
     addIKGUI() {
         let IKToolBar = this.toolBar.addFolder("IK Tools");
         let IK = this;
+        const constraints = [
+            {'min': 0, 'max': 2 * Math.PI},  // Joint 1: [0°, 360°]
+            {'min': -Math.PI / 2, 'max': Math.PI / 2},  // Joint 2: [-90°, 90°]
+            {'min': Math.PI / 2, 'max': 3 * Math.PI / 2},  // Joint 3: [90°, 270°]
+            {'min': 0, 'max': 2 * Math.PI},  // Joint 4: [0°, 360°]
+            {'min': -(5/6)*Math.PI, 'max': (5/6)*Math.PI},  // Joint 5: [150°, -150°]
+            {'min': 0, 'max': 2 * Math.PI}  // Joint 6: [0°, 360°]
+        ];
         const axesHelper = new THREE.AxesHelper(200);
         const tools = {
             target1: 0,
@@ -83,7 +91,7 @@ export default class InverseKinematics extends EventEmitter {
             joint: 1,
             axesHelper: axesHelper,
             calculateFK() {
-                console.log(IK.forwardKinematics().position);
+                console.log(IK.forwardKinematics(IK.getJointAngles()).position);
             },
             addHelperTools() {
                 let object = IK.robotJointMap.get(`j${
@@ -99,6 +107,26 @@ export default class InverseKinematics extends EventEmitter {
                 let target = [tools.target1*(Math.PI/180),tools.target2*(Math.PI/180),tools.target3*(Math.PI/180),tools.target4*(Math.PI/180),tools.target5*(Math.PI/180),tools.target6*(Math.PI/180)];
                 IK.rotateJoint(target);
                 IK.checkSelfCollisions();
+            },
+            randomizeJointRotations() {
+                let valid = false;
+                let randomAngles;
+                while (!valid){
+                    function randomAngle(min, max) {
+                        return Math.random() * (max - min) + min;
+                    }
+                
+                    // Array to hold the random angles for each joint
+                    randomAngles = constraints.map(constraint => {
+                        return randomAngle(constraint.min, constraint.max);
+                    });
+
+                    valid = IK.forwardKinematics(randomAngles).position.y > 0;
+                }
+                if (valid){
+                    IK.rotateJoint(randomAngles);
+                    console.log('Random joint angles:', randomAngles.map(angle => angle.toFixed(2)));
+                }
             }
         }
         IKToolBar.add(tools, "target1", -180, 180, 5 );
@@ -109,6 +137,7 @@ export default class InverseKinematics extends EventEmitter {
         IKToolBar.add(tools, "target6", -180, 180, 5 );
         IKToolBar.add(tools, "calculateFK");
         IKToolBar.add(tools, "RotateJoints");
+        IKToolBar.add(tools, "randomizeJointRotations");
         // IKToolBar.add(tools, "addHelperTools");
         // IKToolBar.add(tools, "DeleteHelperTools");
     }
@@ -199,8 +228,7 @@ export default class InverseKinematics extends EventEmitter {
     
 
     // 257, 289.5, 0
-    forwardKinematics() {
-        let jointAngles = this.getJointAngles();
+    forwardKinematics(jointAngles) {
         // Initialize the transformation matrix as an identity matrix (4x4)
         let transformMatrix = [
             [1, 0, 0, 0],
@@ -258,11 +286,11 @@ export default class InverseKinematics extends EventEmitter {
             return (radians * (180 / Math.PI)).toFixed(1);
         }
 
-        document.getElementById("1").innerHTML = "X: " + styleData(this.forwardKinematics().position.x);
-        document.getElementById("2").innerHTML = " Y: " + styleData(this.forwardKinematics().position.y);
-        document.getElementById("3").innerHTML = " Z: " + styleData(this.forwardKinematics().position.z);
-        document.getElementById("4").innerHTML = "X: " + styleData(this.forwardKinematics().orientation.x);
-        document.getElementById("5").innerHTML = " Y: " + styleData(this.forwardKinematics().orientation.y);
-        document.getElementById("6").innerHTML = " Z: " + styleData(this.forwardKinematics().orientation.z);
+        document.getElementById("1").innerHTML = "X: " + styleData(this.forwardKinematics(this.getJointAngles()).position.x);
+        document.getElementById("2").innerHTML = " Y: " + styleData(this.forwardKinematics(this.getJointAngles()).position.y);
+        document.getElementById("3").innerHTML = " Z: " + styleData(this.forwardKinematics(this.getJointAngles()).position.z);
+        document.getElementById("4").innerHTML = "X: " + styleData(this.forwardKinematics(this.getJointAngles()).orientation.x);
+        document.getElementById("5").innerHTML = " Y: " + styleData(this.forwardKinematics(this.getJointAngles()).orientation.y);
+        document.getElementById("6").innerHTML = " Z: " + styleData(this.forwardKinematics(this.getJointAngles()).orientation.z);
     }
 }
