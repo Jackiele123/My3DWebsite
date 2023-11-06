@@ -4,6 +4,8 @@ import GUI from "lil-gui";
 
 import {EventEmitter} from "events";
 import Experience from "../Experience.js"
+import { AWS } from 'aws-sdk/dist/aws-sdk.min.js';
+import env from "./env.js";
 import { abs } from "numeric";
 
 export default class InverseKinematics extends EventEmitter {
@@ -24,7 +26,16 @@ export default class InverseKinematics extends EventEmitter {
         this.boundingBox = [];
         this.boundingBoxHelpers = [];
         this.meshes = [];
+        this.trainingData = [];
 
+        this.emergencyStop = false;
+        this.s3 = new AWS.S3({
+            endpoint: env[0].endpoint, // Replace with the appropriate endpoint
+            accessKeyId: env[0].accessKeyId,
+            secretAccessKey: env[0].secretAccessKey,
+            region: env[0].region // Replace with the appropriate region
+        });
+        
         this.addIKGUI();
         // DH parameters for a 6DOF robot arm with offset link 1
         this.DHParameters = [
@@ -73,6 +84,43 @@ export default class InverseKinematics extends EventEmitter {
         ];
     }
 
+    async uploadToWasabi(data) {
+        // Convert the data array into CSV format
+        const csv = this.convertArrayToCSV(data);
+    
+        // Define the file name and the Wasabi bucket
+        const fileName = `data-${Date.now()}.csv`;
+        const bucketName = 'robotarm'; // Replace with your bucket name
+    
+        // Configure the parameters for the S3 upload
+        const params = {
+            Bucket: bucketName,
+            Key: fileName,
+            Body: csv,
+            ContentType: 'text/csv'
+        };
+    
+        // Upload the file to Wasabi
+        try {
+            const data = await this.s3.upload(params).promise();
+            console.log('Upload Success', data.Location);
+        } catch (err) {
+            console.log('Upload Error', err);
+        }
+    }
+    
+    // Helper function to convert array of angles and positions to CSV
+    convertArrayToCSV(dataArray) {
+        // Define the header
+        const csvHeader = 'j1,j2,j3,j4,j5,j6,x,y,z,pitch,yaw,roll\n';
+        // Map each data object to a CSV row
+        const csvRows = dataArray.map(item => 
+            `${item.j1},${item.j2},${item.j3},${item.j4},${item.j5},${item.j6},` +
+            `${item.x},${item.y},${item.z},${item.pitch},${item.yaw},${item.roll}`
+        );
+        // Combine the header and rows, with a newline character at the end of each row
+        return csvHeader + csvRows.join('\n');
+    }
     
     addIKGUI() {
         let IKToolBar = this.toolBar.addFolder("IK Tools");
@@ -95,6 +143,10 @@ export default class InverseKinematics extends EventEmitter {
             target6: 0, 
             joint: 1,
             axesHelper: axesHelper,
+            numberOfDataPoints: 0,
+            EmergencyStop() {
+                IK.emergencyStop = true;
+            },
             printStuff() {
                 const position = new THREE.Vector3();
                 IK.robotJointMap.get("j6").getWorldPosition(position);
@@ -117,47 +169,71 @@ export default class InverseKinematics extends EventEmitter {
                 IK.checkSelfCollisions();
             },
             randomizeJointRotations() {
-                let valid = false;
+                let count = 0;
                 let randomAngles;
-                while (!valid){
-                    function randomAngle(min, max) {
-                        return Math.random() * (max - min) + min;
+                while (count < tools.numberOfDataPoints && !IK.emergencyStop){
+                    let valid = false;
+                    while (count < tools.numberOfDataPoints && !valid && !IK.emergencyStop){
+                        function randomAngle(min, max) {
+                            return Math.random() * (max - min) + min;
+                        }
+                    
+                        // Array to hold the random angles for each joint
+                        randomAngles = constraints.map(constraint => {
+                            return randomAngle(constraint.min, constraint.max);
+                        });
+                        let endPosition = new THREE.Vector3();
+                        let endOrientation = new THREE.Euler();
+                        endPosition = IK.forwardKinematics(randomAngles).position;
+                        endOrientation = IK.forwardKinematics(randomAngles).orientation;
+                        endPosition.x = endPosition.x/100;
+                        endPosition.y = endPosition.y/100;
+                        endPosition.z = endPosition.z/100;
+                        if (endPosition.y < 0){
+                            continue;
+                        }
+                        const currAngles = IK.getJointAngles();
+                        IK.rotateJoint(randomAngles);
+                        IK.createBoundingBoxes();
+                        IK.rotateJoint(currAngles);
+    
+                        console.log(endPosition);
+                        if (IK.boundingBox[2].containsPoint(endPosition) || IK.boundingBox[0].containsPoint(endPosition)){
+                            continue;
+                        }
+                        IK.boundingBox.forEach((box) => {
+                            valid = box.min.y > 0;
+                        });
                     }
-                
-                    // Array to hold the random angles for each joint
-                    randomAngles = constraints.map(constraint => {
-                        return randomAngle(constraint.min, constraint.max);
-                    });
-                    let endPosition = new THREE.Vector3();
-                    endPosition = IK.forwardKinematics(randomAngles).position;
-                    endPosition.x = endPosition.x/100;
-                    endPosition.y = endPosition.y/100;
-                    endPosition.z = endPosition.z/100;
-                    if (endPosition.y < 0){
-                        continue;
+                    if (valid){
+                        function RobotData(j1, j2, j3, j4, j5, j6, x, y, z, pitch, yaw, roll) {
+                            this.j1 = j1;
+                            this.j2 = j2;
+                            this.j3 = j3;
+                            this.j4 = j4;
+                            this.j5 = j5;
+                            this.j6 = j6;
+                            this.x = x;
+                            this.y = y;
+                            this.z = z;
+                            this.pitch = pitch;
+                            this.yaw = yaw;
+                            this.roll = roll;
+                        }
+                        let data = new RobotData(randomAngles[0], randomAngles[1], randomAngles[2], randomAngles[3], randomAngles[4], randomAngles[5], endPosition.x, endPosition.y, endPosition.z, endOrientation.x, endOrientation.y, endOrientation.z);
+                        IK.trainingData.push(data);
+                        count++;
+                        //IK.rotateJoint(randomAngles);
+                        //console.log('Random joint angles:', randomAngles.map(angle => angle.toFixed(2)));
                     }
-                    const currAngles = IK.getJointAngles();
-                    IK.rotateJoint(randomAngles);
-                    IK.createBoundingBoxes();
-                    IK.rotateJoint(currAngles);
-
-                    console.log(endPosition);
-                    if (IK.boundingBox[2].containsPoint(endPosition) || IK.boundingBox[0].containsPoint(endPosition)){
-                        continue;
-                    }
-                    IK.boundingBox.forEach((box) => {
-                        valid = box.min.y > 0;
-                    });
                 }
-                if (valid){
-                    IK.rotateJoint(randomAngles);
-                    console.log('Random joint angles:', randomAngles.map(angle => angle.toFixed(2)));
-                }
+                IK.uploadToWasabi(IK.trainingData);
             },
             generateBoundingBox(){
                 IK.createBoundingBoxes();
             }
         }
+        IKToolBar.add(tools, "numberOfDataPoints", 0,100000,100);
         IKToolBar.add(tools, "target1", -180, 180, 5 );
         IKToolBar.add(tools, "target2", -180, 180, 5 );
         IKToolBar.add(tools, "target3", -180, 180, 5 );
@@ -166,6 +242,7 @@ export default class InverseKinematics extends EventEmitter {
         IKToolBar.add(tools, "target6", -180, 180, 5 );
         IKToolBar.add(tools, "printStuff");
         IKToolBar.add(tools, "RotateJoints");
+        IKToolBar.add(tools, "EmergencyStop");
         IKToolBar.add(tools, "randomizeJointRotations");
         IKToolBar.add(tools, "generateBoundingBox");
         // IKToolBar.add(tools, "addHelperTools");
