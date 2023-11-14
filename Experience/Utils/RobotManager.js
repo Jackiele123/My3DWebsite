@@ -173,9 +173,12 @@ export default class RobotManager extends EventEmitter {
                 mesh.updateMatrixWorld(true);
                 child.add(mesh);
                 this.meshes.push(mesh);
+
+                // Set the mesh to be not visible
+                mesh.visible = false;
             }
         });
-        console.log(this.meshes);
+        // console.log(this.meshes);
     }
     
     update() { // animate();
